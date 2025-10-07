@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Student, Lecturer, Admin } from "@/lib/types";
+import { EditUserDialog } from "./edit-user-dialog";
 
 type User = (Student | Lecturer | Admin) & { role: string };
 
@@ -31,6 +32,7 @@ interface UserTableActionsProps {
 }
 
 export function UserTableActions({ user }: UserTableActionsProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -43,15 +45,13 @@ export function UserTableActions({ user }: UserTableActionsProps) {
     setIsDeleteDialogOpen(false);
   };
   
-  const handleEditRole = () => {
-     toast({
-      title: "Edit Role",
-      description: `This is where you would edit the role for ${user.name}.`,
-    });
-  }
-
   return (
     <>
+      <EditUserDialog 
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        user={user}
+      />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -78,9 +78,9 @@ export function UserTableActions({ user }: UserTableActionsProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={handleEditRole}>
+          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" />
-            Edit Role
+            Edit User
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive" disabled={user.role === 'Admin'}>
