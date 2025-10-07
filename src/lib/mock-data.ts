@@ -1,7 +1,7 @@
-import type { Student, Lecturer, Course, AttendanceSession, AttendanceRecord } from './types';
+import type { Student, Lecturer, Course, AttendanceSession, AttendanceRecord, Admin } from './types';
 
 export const students: Student[] = [
-  { id: 'student-1', name: 'Alice Johnson', email: 'alice@example.com' },
+  { id: 'student-1', name: 'Alice Johnson', email: 'student@example.com' },
   { id: 'student-2', name: 'Bob Williams', email: 'bob@example.com' },
   { id: 'student-3', name: 'Charlie Brown', email: 'charlie@example.com' },
   { id: 'student-4', name: 'Diana Miller', email: 'diana@example.com' },
@@ -9,6 +9,10 @@ export const students: Student[] = [
 
 export const lecturers: Lecturer[] = [
   { id: 'lecturer-1', name: 'Dr. Evelyn Davis', email: 'lecturer@example.com' },
+];
+
+export const admins: Admin[] = [
+  { id: 'admin-1', name: 'System Admin', email: 'admin@example.com' },
 ];
 
 export const courses: Course[] = [

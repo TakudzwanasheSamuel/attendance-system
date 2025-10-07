@@ -49,6 +49,8 @@ export function LoginForm() {
       // Simulate role-based redirect
       if (values.email.includes("lecturer")) {
         router.push("/lecturer/dashboard");
+      } else if (values.email.includes("admin")) {
+        router.push("/admin/dashboard");
       } else {
         router.push("/student/dashboard");
       }

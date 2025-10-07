@@ -10,6 +10,12 @@ export interface Lecturer {
   email: string;
 }
 
+export interface Admin {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface Course {
   id: string;
   name: string;

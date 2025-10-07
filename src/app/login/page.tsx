@@ -39,6 +39,10 @@ export default function LoginPage() {
                   <TableCell>Lecturer/Teacher</TableCell>
                   <TableCell className="font-mono">lecturer@example.com</TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell>Administrator</TableCell>
+                  <TableCell className="font-mono">admin@example.com</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </AlertDescription>
