@@ -1,48 +1,34 @@
 
 "use client";
 
-import { AttendanceReportChart } from "@/components/lecturer/attendance-report-chart";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCourseAttendanceReport, courses, lecturers } from "@/lib/mock-data";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import { ReportGenerator } from "@/components/lecturer/report-generator";
+import { courses, lecturers, students } from "@/lib/mock-data";
+import { useMemo } from "react";
 
 export default function ReportsPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const lecturer = lecturers[0]; // Mock current user
-  const lecturerCourses = courses.filter(c => c.lecturerId === lecturer.id);
-  const selectedCourseId = searchParams.get('course') || lecturerCourses[0]?.id;
-  const reportData = getCourseAttendanceReport(selectedCourseId);
+  
+  const lecturerCourses = useMemo(() => {
+    return courses.filter(c => c.lecturerId === lecturer.id);
+  }, [lecturer.id]);
 
-  const handleCourseChange = (courseId: string) => {
-    router.push(`/lecturer/reports?course=${courseId}`);
-  };
+  const enrolledStudents = useMemo(() => {
+    const studentIds = new Set(lecturerCourses.flatMap(c => c.enrolledStudentIds));
+    return students.filter(s => studentIds.has(s.id));
+  }, [lecturerCourses]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Attendance Reports</h2>
-          <p className="text-muted-foreground">
-            Visualize student attendance percentages for your courses.
-          </p>
-        </div>
-        <div className="w-full md:w-64">
-          <Select value={selectedCourseId} onValueChange={handleCourseChange}>
-            <SelectTrigger id="course-select">
-              <SelectValue placeholder="Select a course" />
-            </SelectTrigger>
-            <SelectContent>
-              {lecturerCourses.map(course => (
-                 <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight font-headline">Generate Attendance Report</h2>
+        <p className="text-muted-foreground">
+          Use AI to generate a comprehensive summary of attendance data for your courses.
+        </p>
       </div>
-      
-      <AttendanceReportChart data={reportData} />
+      <ReportGenerator 
+        courses={lecturerCourses}
+        students={enrolledStudents}
+      />
     </div>
   );
 }
