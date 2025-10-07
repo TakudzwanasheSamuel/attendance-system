@@ -1,19 +1,23 @@
+
+"use client";
+
 import { AttendanceReportChart } from "@/components/lecturer/attendance-report-chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCourseAttendanceReport, courses, lecturers } from "@/lib/mock-data";
+import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-export default function ReportsPage({
-  searchParams,
-}: {
-  searchParams?: {
-    course?: string;
-  };
-}) {
+export default function ReportsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const lecturer = lecturers[0]; // Mock current user
   const lecturerCourses = courses.filter(c => c.lecturerId === lecturer.id);
-  const selectedCourseId = searchParams?.course || lecturerCourses[0]?.id;
+  const selectedCourseId = searchParams.get('course') || lecturerCourses[0]?.id;
   const reportData = getCourseAttendanceReport(selectedCourseId);
+
+  const handleCourseChange = (courseId: string) => {
+    router.push(`/lecturer/reports?course=${courseId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -25,7 +29,7 @@ export default function ReportsPage({
           </p>
         </div>
         <div className="w-full md:w-64">
-          <Select defaultValue={selectedCourseId}>
+          <Select value={selectedCourseId} onValueChange={handleCourseChange}>
             <SelectTrigger id="course-select">
               <SelectValue placeholder="Select a course" />
             </SelectTrigger>
