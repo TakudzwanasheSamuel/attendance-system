@@ -1,74 +1,101 @@
-# Database Structure
+# Database Structure (MySQL)
 
-This document outlines the proposed database structure for the Smart Student Monitoring System. A NoSQL database like Google Cloud Firestore is recommended, as its document-collection model is well-suited for this application's data relationships.
+This document outlines the proposed database structure for the Smart Student Monitoring System using a relational database like MySQL. An Object-Relational Mapper (ORM) like Prisma is recommended for interacting with the database.
 
-Below are the proposed collections and the schema for the documents within them.
+Below are the proposed tables and the schema for each.
 
-## Collections
+## Tables
 
-### `users`
+### `User`
 
 Stores information about all individuals who can log into the system. A `role` field distinguishes between students, lecturers, and admins.
 
-- **Path**: `/users/{userId}`
+**SQL Schema:**
+```sql
+CREATE TABLE User (
+    id        String   @id @default(cuid())
+    name      String
+    email     String   @unique
+    password  String   -- Hashed password
+    role      Role     @default(STUDENT)
+    courses   Course[] @relation("CourseToLecturer")
+    enrollments CourseEnrollment[]
+    records   AttendanceRecord[]
+);
 
-**Document Schema:**
-```json
-{
-  "id": "string",
-  "name": "string",
-  "email": "string",
-  "role": "string ('student' | 'lecturer' | 'admin')"
+enum Role {
+    STUDENT
+    LECTURER
+    ADMIN
 }
 ```
 
-### `courses`
+### `Course`
 
-Stores information about all courses offered. It includes a reference to the lecturer teaching it and a list of enrolled student IDs.
+Stores information about all courses offered. It includes a reference to the lecturer teaching it.
 
-- **Path**: `/courses/{courseId}`
-
-**Document Schema:**
-```json
-{
-  "id": "string",
-  "name": "string",
-  "code": "string",
-  "lecturerId": "string", // Foreign Key to a user document in the 'users' collection
-  "enrolledStudentIds": ["string"] // Array of user IDs from the 'users' collection
-}
+**SQL Schema:**
+```sql
+CREATE TABLE Course (
+    id          String   @id @default(cuid())
+    name        String
+    code        String   @unique
+    lecturer    User     @relation("CourseToLecturer", fields: [lecturerId], references: [id])
+    lecturerId  String
+    enrollments CourseEnrollment[]
+    sessions    AttendanceSession[]
+);
 ```
 
-### `attendanceSessions`
+### `CourseEnrollment`
 
-A collection to store every attendance session created by a lecturer for a specific course.
+A join table to manage the many-to-many relationship between students and courses.
 
-- **Path**: `/attendanceSessions/{sessionId}`
+**SQL Schema:**
+```sql
+CREATE TABLE CourseEnrollment (
+    student   User     @relation(fields: [studentId], references: [id])
+    studentId String
+    course    Course   @relation(fields: [courseId], references: [id])
+    courseId  String
+    createdAt DateTime @default(now())
 
-**Document Schema:**
-```json
-{
-  "id": "string",
-  "courseId": "string", // Foreign Key to a document in the 'courses' collection
-  "code": "string", // The unique code for this session
-  "createdAt": "timestamp", // The time the session was created
-  "expiresAt": "timestamp" // The time the session code is no longer valid
-}
+    @@id([studentId, courseId])
+);
 ```
 
-### `attendanceRecords`
+### `AttendanceSession`
 
-This collection logs each time a student successfully marks their attendance for a session. It links a student to a specific session.
+A table to store every attendance session created by a lecturer for a specific course.
 
-- **Path**: `/attendanceRecords/{recordId}`
+**SQL Schema:**
+```sql
+CREATE TABLE AttendanceSession (
+    id        String   @id @default(cuid())
+    course    Course   @relation(fields: [courseId], references: [id])
+    courseId  String
+    code      String   @unique
+    createdAt DateTime @default(now())
+    expiresAt DateTime
+    records   AttendanceRecord[]
+);
+```
 
-**Document Schema:**
-```json
-{
-  "id": "string",
-  "sessionId": "string", // Foreign Key to a document in the 'attendanceSessions' collection
-  "studentId": "string", // Foreign Key to a user document in the 'users' collection
-  "timestamp": "timestamp", // The time the student marked their attendance
-  "status": "string ('Present')"
-}
+### `AttendanceRecord`
+
+This table logs each time a student successfully marks their attendance for a session.
+
+**SQL Schema:**
+```sql
+CREATE TABLE AttendanceRecord (
+    id        String            @id @default(cuid())
+    session   AttendanceSession @relation(fields: [sessionId], references: [id])
+    sessionId String
+    student   User              @relation(fields: [studentId], references: [id])
+    studentId String
+    timestamp DateTime          @default(now())
+    status    String            @default("Present") -- e.g., 'Present', 'Late'
+
+    @@unique([sessionId, studentId])
+);
 ```
