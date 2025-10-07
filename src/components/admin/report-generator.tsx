@@ -63,9 +63,9 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            courseId: "",
-            lecturerId: "",
-            studentId: "",
+            courseId: "all",
+            lecturerId: "all",
+            studentId: "all",
             dateRange: { from: undefined, to: undefined },
         },
     });
@@ -73,8 +73,17 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
     async function onSubmit(data: FormValues) {
         setIsLoading(true);
         setReport(null);
+        
+        // Don't send 'all' to the server action, send undefined instead
+        const filters = {
+            courseId: data.courseId === 'all' ? undefined : data.courseId,
+            lecturerId: data.lecturerId === 'all' ? undefined : data.lecturerId,
+            studentId: data.studentId === 'all' ? undefined : data.studentId,
+            dateRange: data.dateRange,
+        };
+
         try {
-            const result = await generateAttendanceReport(data);
+            const result = await generateAttendanceReport(filters);
             if (result.success && result.report) {
                 setReport(result.report);
                 toast({
@@ -163,7 +172,7 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">All Courses</SelectItem>
+                                            <SelectItem value="all">All Courses</SelectItem>
                                             {courses.map(course => (
                                                 <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>
                                             ))}
@@ -186,7 +195,7 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">All Lecturers</SelectItem>
+                                            <SelectItem value="all">All Lecturers</SelectItem>
                                             {lecturers.map(lecturer => (
                                                 <SelectItem key={lecturer.id} value={lecturer.id}>{lecturer.name}</SelectItem>
                                             ))}
@@ -209,7 +218,7 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">All Students</SelectItem>
+                                            <SelectItem value="all">All Students</SelectItem>
                                             {students.map(student => (
                                                 <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
                                             ))}
