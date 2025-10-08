@@ -50,6 +50,10 @@ To run the application locally, follow these steps:
 
 You can use the following email addresses on the login page to explore the different roles. Any password will be accepted.
 
-- **Administrator**: `admin@example.com`
-- **Lecturer**: `lecturer@example.com`
-- **Student**: `student@example.com`
+- Student: student@msu.com
+Lecturer: lecturer@msu.com
+Admin: admin@msu.com
+
+ password: student123, lecturer123, or admin123
+
+ 

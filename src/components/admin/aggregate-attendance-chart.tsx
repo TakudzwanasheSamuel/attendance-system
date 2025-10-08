@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
@@ -26,11 +26,11 @@ interface AggregateAttendanceChartProps {
 
 export function AggregateAttendanceChart({ data }: AggregateAttendanceChartProps) {
   return (
-    <div className="w-full h-[300px]">
+    <div className="w-full h-[320px] overflow-hidden">
         {data.length > 0 ? (
             <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
             <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+                <LineChart data={data} margin={{ top: 16, right: 16, left: 8, bottom: 12 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                     dataKey="name"
@@ -48,16 +48,15 @@ export function AggregateAttendanceChart({ data }: AggregateAttendanceChartProps
                     cursor={false}
                     content={<ChartTooltipContent indicator="dot" />}
                 />
-                <Bar dataKey="percentage" fill="var(--color-percentage)" radius={4}>
-                    <LabelList
-                    position="top"
-                    offset={10}
-                    className="fill-foreground"
-                    fontSize={12}
-                    formatter={(value: number) => `${value}%`}
-                    />
-                </Bar>
-                </BarChart>
+                <Line 
+                    type="monotone" 
+                    dataKey="percentage" 
+                    stroke="var(--color-percentage)" 
+                    strokeWidth={3}
+                    dot={{ fill: "var(--color-percentage)", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "var(--color-percentage)", strokeWidth: 2 }}
+                />
+                </LineChart>
             </ResponsiveContainer>
             </ChartContainer>
         ) : (

@@ -3,8 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +19,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { loginAction } from "@/lib/auth-actions";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -30,8 +32,8 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
+  const [state, formAction, isPending] = useActionState(loginAction, null);
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,25 +43,16 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Simulate role-based redirect
-      if (values.email.includes("lecturer")) {
-        router.push("/lecturer/dashboard");
-      } else if (values.email.includes("admin")) {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
-    }, 1000);
-  }
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      router.push(state.redirectTo);
+    }
+  }, [state, router]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <Card>
           <CardContent className="space-y-4 pt-6">
             <FormField
@@ -90,10 +83,13 @@ export function LoginForm() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
+            {state?.error && (
+              <p className="text-sm text-red-600 text-center">{state.error}</p>
+            )}
             <p className="text-sm text-center text-muted-foreground">
               Don't have an account?{" "}
               <Button variant="link" asChild className="p-0 h-auto">

@@ -2,27 +2,93 @@ import { AttendanceTracker } from "@/components/lecturer/attendance-tracker";
 import { CreateSessionDialog } from "@/components/lecturer/create-session-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { attendanceRecords, attendanceSessions, courses, students } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default function CourseDetailPage({ params }: { params: { courseId: string } }) {
-  const course = courses.find(c => c.id === params.courseId);
+export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
+  // Await params to fix Next.js 15 async params issue
+  const { courseId } = await params;
+  
+  console.log('🔍 Loading course detail for course ID:', courseId);
+  
+  // Get the current user from the auth token
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  
+  if (!token) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
+          <p className="text-muted-foreground">Please log in to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verify the token and get user info
+  const userPayload = verifyToken(token);
+  
+  if (!userPayload || userPayload.role !== 'LECTURER') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
+          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get the course with all related data
+  const course = await prisma.course.findFirst({
+    where: { 
+      id: courseId,
+      lecturerId: userPayload.id // Ensure the lecturer owns this course
+    },
+    include: {
+      courseenrollment: {
+        include: {
+          user: true // student info
+        }
+      },
+      attendancesession: {
+        where: {
+          expiresAt: {
+            gt: new Date() // Only active sessions
+          }
+        },
+        include: {
+          attendancerecord: {
+            include: {
+              user: true // student info
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1 // Get the most recent active session
+      }
+    }
+  });
+
   if (!course) {
+    console.log('❌ Course not found or not owned by lecturer');
     notFound();
   }
 
-  const activeSession = attendanceSessions.find(s => s.courseId === course.id && s.expiresAt > new Date());
+  console.log(`📊 Course ${course.name} has ${course.courseenrollment.length} enrolled students`);
+
+  const activeSession = course.attendancesession[0] || null;
   
   const attendedStudents = activeSession
-    ? attendanceRecords
-        .filter(r => r.sessionId === activeSession.id)
-        .map(r => students.find(s => s.id === r.studentId))
-        .filter((s): s is NonNullable<typeof s> => s !== undefined)
+    ? activeSession.attendancerecord.map(record => record.user)
     : [];
 
-  const enrolledStudents = students.filter(s => course.enrolledStudentIds.includes(s.id));
+  const enrolledStudents = course.courseenrollment.map(enrollment => enrollment.user);
 
   return (
     <div className="space-y-6">

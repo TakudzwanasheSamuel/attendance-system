@@ -1,0 +1,15 @@
+# Database Configuration
+# Update the connection string to match your MySQL setup
+DATABASE_URL="mysql://root:takudzwa@localhost:3306/smart_student_monitoring_v2"
+
+# JWT Secret for authentication
+# Generate a strong secret key for production
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production-12345"
+
+# NextAuth Configuration (optional - for future use)
+NEXTAUTH_URL="http://localhost:9002"
+NEXTAUTH_SECRET="your-nextauth-secret-key-change-this-in-production"
+
+# Google AI Configuration (for Genkit)
+# You'll need to get this from Google AI Studio
+GOOGLE_GENAI_API_KEY="AIzaSyCVuijTbxuA8DrtfMQScKYz3SDSgQd-h4c"

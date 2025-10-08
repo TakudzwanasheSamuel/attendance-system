@@ -1,36 +1,99 @@
 "use server";
 
 import { validateAttendanceSession, ValidateAttendanceSessionInput } from "@/ai/flows/validate-attendance-session";
-import { courses, students } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { markAttendance as markAttendanceDB } from "@/lib/database-actions";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
 export async function markAttendance(sessionCode: string) {
   try {
-    // For demonstration, we'll use a mock student and course.
-    // In a real app, this would come from the user's session.
-    const studentId = students[0].id;
-    // We'll guess the course based on the active session code. This is a simplification.
-    const courseId = courses[0].id;
-
-    const input: ValidateAttendanceSessionInput = {
-      sessionCode,
-      studentId,
-      courseId,
-    };
-    
-    // In a real application, you'd have logic to find the active session and check enrollment.
-    // The GenAI flow simulates this complex validation.
-    // To make the demo work, let's rig the AI response for a known code.
-    if (sessionCode === 'ACTIVE123' && courseId === 'course-1' && studentId === 'student-1') {
-      // Simulate successful validation from a database before calling AI
+    // Get current user from token
+    const token = cookies().get('auth-token')?.value;
+    if (!token) {
       return {
-        isValidSession: true,
-        isEnrolled: true,
-        validationMessage: "Attendance successfully marked for Advanced Web Development.",
+        isValidSession: false,
+        isEnrolled: false,
+        validationMessage: "Please log in to mark attendance.",
       };
     }
 
-    const result = await validateAttendanceSession(input);
-    return result;
+    const user = verifyToken(token);
+    if (!user || user.role !== 'STUDENT') {
+      return {
+        isValidSession: false,
+        isEnrolled: false,
+        validationMessage: "Only students can mark attendance.",
+      };
+    }
+
+    // Find the active session with the given code
+    const session = await prisma.attendanceSession.findFirst({
+      where: {
+        code: sessionCode,
+        expiresAt: { gt: new Date() }
+      },
+      include: {
+        course: true
+      }
+    });
+
+    if (!session) {
+      return {
+        isValidSession: false,
+        isEnrolled: false,
+        validationMessage: "Invalid or expired session code.",
+      };
+    }
+
+    // Check if student is enrolled in the course
+    const enrollment = await prisma.courseEnrollment.findUnique({
+      where: {
+        studentId_courseId: {
+          studentId: user.id,
+          courseId: session.courseId
+        }
+      }
+    });
+
+    if (!enrollment) {
+      return {
+        isValidSession: true,
+        isEnrolled: false,
+        validationMessage: "You are not enrolled in this course.",
+      };
+    }
+
+    // Check if already marked attendance
+    const existingRecord = await prisma.attendanceRecord.findUnique({
+      where: {
+        sessionId_studentId: {
+          sessionId: session.id,
+          studentId: user.id
+        }
+      }
+    });
+
+    if (existingRecord) {
+      return {
+        isValidSession: true,
+        isEnrolled: true,
+        validationMessage: "Attendance already marked for this session.",
+      };
+    }
+
+    // Mark attendance
+    await markAttendanceDB({
+      sessionId: session.id,
+      studentId: user.id,
+      status: 'Present'
+    });
+
+    return {
+      isValidSession: true,
+      isEnrolled: true,
+      validationMessage: `Attendance successfully marked for ${session.course.name}.`,
+    };
   } catch (error) {
     console.error("Error in markAttendance action:", error);
     return {

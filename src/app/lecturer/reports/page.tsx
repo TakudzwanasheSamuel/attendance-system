@@ -1,21 +1,69 @@
 
-"use client";
-
 import { ReportGenerator } from "@/components/lecturer/report-generator";
-import { courses, lecturers, students } from "@/lib/mock-data";
-import { useMemo } from "react";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
-export default function ReportsPage() {
-  const lecturer = lecturers[0]; // Mock current user
+export default async function ReportsPage() {
+  // Get the current user from the auth token
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
   
-  const lecturerCourses = useMemo(() => {
-    return courses.filter(c => c.lecturerId === lecturer.id);
-  }, [lecturer.id]);
+  if (!token) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
+          <p className="text-muted-foreground">Please log in to access the reports page.</p>
+        </div>
+      </div>
+    );
+  }
 
-  const enrolledStudents = useMemo(() => {
-    const studentIds = new Set(lecturerCourses.flatMap(c => c.enrolledStudentIds));
-    return students.filter(s => studentIds.has(s.id));
-  }, [lecturerCourses]);
+  // Verify the token and get user info
+  const userPayload = verifyToken(token);
+  
+  if (!userPayload || userPayload.role !== 'LECTURER') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
+          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('🔍 Loading lecturer reports for lecturer:', userPayload.id);
+
+  // Get lecturer's courses and enrolled students
+  const lecturerCourses = await prisma.course.findMany({
+    where: { lecturerId: userPayload.id },
+    include: {
+      courseenrollment: {
+        include: {
+          user: true // student info
+        }
+      }
+    }
+  });
+
+  // Get unique students (a student might be enrolled in multiple courses)
+  const allStudents = lecturerCourses.flatMap(course => 
+    course.courseenrollment.map(enrollment => enrollment.user)
+  );
+  
+  // Remove duplicates by creating a Map with student ID as key
+  const uniqueStudentsMap = new Map();
+  allStudents.forEach(student => {
+    if (!uniqueStudentsMap.has(student.id)) {
+      uniqueStudentsMap.set(student.id, student);
+    }
+  });
+  
+  const enrolledStudents = Array.from(uniqueStudentsMap.values());
+
+  console.log(`📊 Lecturer has ${lecturerCourses.length} courses and ${enrolledStudents.length} enrolled students`);
 
   return (
     <div className="space-y-6">
@@ -26,8 +74,18 @@ export default function ReportsPage() {
         </p>
       </div>
       <ReportGenerator 
-        courses={lecturerCourses}
-        students={enrolledStudents}
+        courses={lecturerCourses.map(c => ({
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          lecturerId: c.lecturerId,
+          enrolledStudentIds: c.courseenrollment.map(e => e.studentId)
+        }))}
+        students={enrolledStudents.map(s => ({
+          id: s.id,
+          name: s.name,
+          email: s.email
+        }))}
       />
     </div>
   );

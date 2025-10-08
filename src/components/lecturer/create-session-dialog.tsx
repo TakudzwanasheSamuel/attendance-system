@@ -1,112 +1,86 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { QrCode, ClipboardCopy, Check } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import Image from "next/image";
-import type { AttendanceSession } from "@/lib/types";
-import { useState, useEffect } from "react";
-import { Badge } from "../ui/badge";
+import { QrCode, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateSessionDialogProps {
   courseId: string;
-  activeSession: AttendanceSession | undefined;
+  activeSession: any; // Updated to match the database structure
 }
 
-export function CreateSessionDialog({ activeSession }: CreateSessionDialogProps) {
-  const [isCopied, setIsCopied] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("");
+export function CreateSessionDialog({ courseId, activeSession }: CreateSessionDialogProps) {
+  const [isCreating, setIsCreating] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const qrImage = PlaceHolderImages.find((p) => p.id === "qr-code");
-  const sessionCode = activeSession?.code || "ACTIVE123";
-
-  useEffect(() => {
+  const handleCreateSession = async () => {
     if (activeSession) {
-      const interval = setInterval(() => {
-        const now = new Date();
-        const expiry = activeSession.expiresAt;
-        const diff = expiry.getTime() - now.getTime();
-
-        if (diff <= 0) {
-          setTimeLeft("Expired");
-          clearInterval(interval);
-          return;
-        }
-
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-      }, 1000);
-
-      return () => clearInterval(interval);
+      // If there's already an active session, redirect to it
+      router.push(`/lecturer/courses/${courseId}/session/${activeSession.id}`);
+      return;
     }
-  }, [activeSession]);
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(sessionCode);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    setIsCreating(true);
+
+    try {
+      const response = await fetch('/api/sessions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: courseId,
+          duration: 15 // 15 minutes default
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Session Created",
+          description: "New attendance session has been created successfully.",
+        });
+        // Redirect to the new session page
+        router.push(`/lecturer/courses/${courseId}/session/${result.session.id}`);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Failed to Create Session",
+          description: result.error || "Failed to create attendance session.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred while creating the session.",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>
+    <Button 
+      onClick={handleCreateSession}
+      disabled={isCreating}
+    >
+      {isCreating ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Creating Session...
+        </>
+      ) : (
+        <>
           <QrCode className="mr-2 h-4 w-4" />
           {activeSession ? "View Active Session" : "Create New Session"}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="font-headline">
-            {activeSession ? "Active Attendance Session" : "New Session Created"}
-          </DialogTitle>
-          <DialogDescription>
-            Students can now mark their attendance using this code.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col items-center gap-6 py-4">
-          {qrImage && (
-            <div className="p-4 bg-white rounded-lg border shadow-sm">
-              <Image
-                src={qrImage.imageUrl}
-                alt={qrImage.description}
-                data-ai-hint={qrImage.imageHint}
-                width={256}
-                height={256}
-                className="rounded-md"
-              />
-            </div>
-          )}
-          <div className="w-full text-center">
-            <p className="text-sm text-muted-foreground">Session Code</p>
-            <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-3xl font-bold tracking-widest font-code text-primary">
-                    {sessionCode}
-                </p>
-                <Button variant="ghost" size="icon" onClick={copyToClipboard} aria-label="Copy code">
-                    {isCopied ? <Check className="h-5 w-5 text-accent-foreground" /> : <ClipboardCopy className="h-5 w-5" />}
-                </Button>
-            </div>
-          </div>
-        </div>
-        <DialogFooter className="sm:justify-center">
-            {activeSession && timeLeft && (
-                 <Badge variant="secondary" className="text-lg">
-                    Expires in: <span className="font-mono ml-2 font-bold">{timeLeft}</span>
-                 </Badge>
-            )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      )}
+    </Button>
   );
 }

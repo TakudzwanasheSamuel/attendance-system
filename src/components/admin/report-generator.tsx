@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Wand2 } from "lucide-react";
+import { CalendarIcon, Loader2, Wand2, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course, Lecturer, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { generateAttendanceReport } from "./actions";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Info } from "lucide-react";
 
 
 interface ReportGeneratorProps {
@@ -59,6 +57,95 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
     const [isLoading, setIsLoading] = useState(false);
     const [report, setReport] = useState<string | null>(null);
     const { toast } = useToast();
+
+    const handlePrint = () => {
+        if (!report) return;
+        
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Attendance Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            h1, h2, h3 { color: #333; }
+                            .report-content { max-width: 800px; margin: 0 auto; }
+                            @media print { body { margin: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="report-content">
+                            ${report}
+                        </div>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
+
+    const handleExportPDF = async () => {
+        if (!report) return;
+        
+        try {
+            // Create a temporary element with the report content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = report;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '-9999px';
+            document.body.appendChild(tempDiv);
+
+            // Use html2canvas and jsPDF to generate PDF
+            const { default: html2canvas } = await import('html2canvas');
+            const { default: jsPDF } = await import('jspdf');
+            
+            const canvas = await html2canvas(tempDiv, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 295;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            // Clean up
+            document.body.removeChild(tempDiv);
+            
+            // Download the PDF
+            const fileName = `attendance-report-${new Date().toISOString().split('T')[0]}.pdf`;
+            pdf.save(fileName);
+            
+            toast({
+                title: "PDF Exported",
+                description: "The report has been exported as a PDF file.",
+            });
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            toast({
+                variant: "destructive",
+                title: "Export Failed",
+                description: "Failed to export the report as PDF. Please try again.",
+            });
+        }
+    };
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -246,8 +333,34 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
             <div className="lg:col-span-2">
                 <Card className="min-h-[500px]">
                     <CardHeader>
-                        <CardTitle className="font-headline">AI-Generated Summary</CardTitle>
-                         <CardDescription>A comprehensive analysis of the filtered attendance data.</CardDescription>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle className="font-headline">AI-Generated Summary</CardTitle>
+                                <CardDescription>A comprehensive analysis of the filtered attendance data.</CardDescription>
+                            </div>
+                            {report && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handlePrint}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                        Print
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleExportPDF}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Export PDF
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="prose prose-sm dark:prose-invert max-w-none">
                         {isLoading && (
@@ -270,13 +383,6 @@ export function ReportGenerator({ courses, lecturers, students }: ReportGenerato
                         )}
                     </CardContent>
                 </Card>
-                 <Alert className="mt-4">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>About This Feature</AlertTitle>
-                    <AlertDescription>
-                        This report is generated by a large language model (LLM) based on the mock data in the application. The summary, analysis, and recommendations are all produced by AI.
-                    </AlertDescription>
-                </Alert>
             </div>
         </div>
     );

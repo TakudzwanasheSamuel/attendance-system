@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
+}
+
+model attendancerecord {
+  id                String            @id
+  sessionId         String
+  studentId         String
+  timestamp         DateTime          @default(now())
+  status            String            @default("Present")
+  attendancesession attendancesession @relation(fields: [sessionId], references: [id], map: "AttendanceRecord_sessionId_fkey")
+  user              user              @relation(fields: [studentId], references: [id], map: "AttendanceRecord_studentId_fkey")
+
+  @@unique([sessionId, studentId], map: "AttendanceRecord_sessionId_studentId_key")
+  @@index([studentId], map: "AttendanceRecord_studentId_fkey")
+  @@map("attendance_records")
+}
+
+model attendancesession {
+  id               String             @id
+  courseId         String
+  code             String             @unique(map: "AttendanceSession_code_key")
+  createdAt        DateTime           @default(now())
+  expiresAt        DateTime
+  attendancerecord attendancerecord[]
+  course           course             @relation(fields: [courseId], references: [id], map: "AttendanceSession_courseId_fkey")
+
+  @@index([courseId], map: "AttendanceSession_courseId_fkey")
+  @@map("attendance_sessions")
+}
+
+model course {
+  id                String              @id
+  name              String
+  code              String              @unique(map: "Course_code_key")
+  lecturerId        String
+  attendancesession attendancesession[]
+  user              user                @relation(fields: [lecturerId], references: [id], map: "Course_lecturerId_fkey")
+  courseenrollment  courseenrollment[]
+
+  @@index([lecturerId], map: "Course_lecturerId_fkey")
+  @@map("courses")
+}
+
+model courseenrollment {
+  studentId String
+  courseId  String
+  createdAt DateTime @default(now())
+  course    course   @relation(fields: [courseId], references: [id], map: "CourseEnrollment_courseId_fkey")
+  user      user     @relation(fields: [studentId], references: [id], map: "CourseEnrollment_studentId_fkey")
+
+  @@id([studentId, courseId])
+  @@index([courseId], map: "CourseEnrollment_courseId_fkey")
+  @@map("course_enrollments")
+}
+
+model session {
+  id           String   @id
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Session_userId_fkey")
+
+  @@index([userId], map: "Session_userId_fkey")
+}
+
+model user {
+  id               String             @id
+  name             String
+  email            String             @unique(map: "User_email_key")
+  password         String
+  role             user_role          @default(STUDENT)
+  account          account[]
+  attendancerecord attendancerecord[]
+  course           course[]
+  courseenrollment courseenrollment[]
+  session          session[]
+  @@map("users")
+}
+
+model verificationtoken {
+  identifier String
+  token      String   @unique(map: "VerificationToken_token_key")
+  expires    DateTime
+
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+}
+
+enum user_role {
+  STUDENT
+  LECTURER
+  ADMIN
+}

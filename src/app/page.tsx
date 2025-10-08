@@ -1,17 +1,25 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpenCheck, QrCode, Users } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BookOpenCheck className="h-8 w-8 text-primary" />
-          <h1 className="text-xl font-bold tracking-tight font-headline">
-            Smart Student Monitoring
-          </h1>
+        <div className="flex items-center gap-3">
+          <div className="relative h-10 w-10">
+            <Image
+              src="/logo.png"
+              alt="App Logo"
+              fill
+              className="rounded-full ring-2 ring-primary shadow object-cover bg-white"
+              sizes="40px"
+              priority
+            />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight font-headline">Smart Student Monitoring</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" asChild>
@@ -26,6 +34,16 @@ export default function Home() {
       <main className="flex-1">
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/20 via-background to-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="mx-auto mb-6 relative h-24 w-24">
+              <Image
+                src="/logo.png"
+                alt="App Logo"
+                fill
+                className="rounded-full ring-4 ring-primary shadow-xl object-cover bg-white"
+                sizes="96px"
+                priority
+              />
+            </div>
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter mb-4 font-headline bg-gradient-to-b from-foreground to-foreground/70 text-transparent bg-clip-text">
               Revolutionizing Classroom Attendance
             </h2>

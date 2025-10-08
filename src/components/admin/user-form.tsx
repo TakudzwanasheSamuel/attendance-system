@@ -17,9 +17,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Student, Lecturer, Admin } from "@/lib/types";
-
-type User = (Student | Lecturer | Admin) & { role: string };
+import { User } from "@prisma/client";
+import { createUser, updateUser } from "@/lib/database-actions";
 
 interface UserFormProps {
     user?: User;
@@ -29,7 +28,7 @@ interface UserFormProps {
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email."),
-  role: z.enum(["Admin", "Lecturer", "Student"], { required_error: "Please select a role." }),
+  role: z.enum(["ADMIN", "LECTURER", "STUDENT"], { required_error: "Please select a role." }),
   // Password is only required for new users
   password: z.string().optional(),
 }).refine(data => {
@@ -57,24 +56,45 @@ export function UserForm({ user, closeDialog }: UserFormProps) {
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
-      role: user?.role as any || "Student",
+      role: user?.role as any || "STUDENT",
       password: "",
     },
   });
   
-  function onSubmit(data: UserFormValues) {
+  async function onSubmit(data: UserFormValues) {
     setIsLoading(true);
-    console.log(data);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    try {
+      if (isEditMode && user) {
+        await updateUser(user.id, {
+          name: data.name,
+          email: data.email,
+          role: data.role as any,
+          ...(data.password && { password: data.password })
+        });
+      } else {
+        await createUser({
+          name: data.name,
+          email: data.email,
+          password: data.password!,
+          role: data.role as any
+        });
+      }
+      
       toast({
         title: user ? "User Updated" : "User Created",
         description: `The user "${data.name}" has been successfully saved.`,
       });
       closeDialog();
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save user",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -135,9 +155,9 @@ export function UserForm({ user, closeDialog }: UserFormProps) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="Admin">Admin</SelectItem>
-                            <SelectItem value="Lecturer">Lecturer</SelectItem>
-                            <SelectItem value="Student">Student</SelectItem>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                            <SelectItem value="LECTURER">Lecturer</SelectItem>
+                            <SelectItem value="STUDENT">Student</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />

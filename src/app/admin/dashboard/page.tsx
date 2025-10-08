@@ -1,19 +1,36 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { courses, lecturers, students, getCourseAttendanceReport, attendanceSessions } from "@/lib/mock-data";
 import { Book, GraduationCap, UserSquare, History, CheckCircle } from "lucide-react";
 import { AggregateAttendanceChart } from "@/components/admin/aggregate-attendance-chart";
 import { RecentActivity } from "@/components/admin/recent-activity";
+import { prisma } from "@/lib/prisma";
 
-export default function AdminDashboardPage() {
-    
+export default async function AdminDashboardPage() {
+    // Fetch real data from database
+    const [students, lecturers, courses, attendanceSessions, attendanceRecords] = await Promise.all([
+        prisma.user.findMany({ where: { role: 'STUDENT' } }),
+        prisma.user.findMany({ where: { role: 'LECTURER' } }),
+        prisma.course.findMany(),
+        prisma.attendancesession.findMany(),
+        prisma.attendancerecord.findMany({
+            include: {
+                user: true,
+                attendancesession: {
+                    include: {
+                        course: true
+                    }
+                }
+            }
+        })
+    ]);
+
     // Create aggregate data for the chart
-    const allReports = courses.flatMap(course => getCourseAttendanceReport(course.id));
-    const studentsWithAttendance = allReports.reduce((acc, report) => {
-        if (!acc[report.name]) {
-            acc[report.name] = { attended: 0, total: 0 };
+    const studentsWithAttendance = attendanceRecords.reduce((acc, record) => {
+        const studentName = record.user.name;
+        if (!acc[studentName]) {
+            acc[studentName] = { attended: 0, total: 0 };
         }
-        acc[report.name].attended += report.attended;
-        acc[report.name].total += report.total;
+        acc[studentName].attended += record.status === 'Present' ? 1 : 0;
+        acc[studentName].total += 1;
         return acc;
     }, {} as Record<string, { attended: number; total: number }>);
 
@@ -92,7 +109,13 @@ export default function AdminDashboardPage() {
                         <CardDescription>A log of recent system events.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RecentActivity />
+                        <RecentActivity 
+                            attendanceRecords={attendanceRecords}
+                            attendanceSessions={attendanceSessions}
+                            students={students}
+                            courses={courses}
+                            lecturers={lecturers}
+                        />
                     </CardContent>
                 </Card>
             </div>

@@ -1,7 +1,22 @@
 import { ReportGenerator } from "@/components/admin/report-generator";
-import { courses, lecturers, students, attendanceRecords, attendanceSessions } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
 
-export default function AdminReportsPage() {
+export default async function AdminReportsPage() {
+    // Fetch real data from database
+    const [courses, lecturers, students] = await Promise.all([
+        prisma.course.findMany({
+            include: {
+                user: true // lecturer info
+            }
+        }),
+        prisma.user.findMany({
+            where: { role: 'LECTURER' }
+        }),
+        prisma.user.findMany({
+            where: { role: 'STUDENT' }
+        })
+    ]);
+
     return (
         <div className="space-y-6">
             <div>
@@ -11,9 +26,23 @@ export default function AdminReportsPage() {
                 </p>
             </div>
             <ReportGenerator 
-                courses={courses}
-                lecturers={lecturers}
-                students={students}
+                courses={courses.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    code: c.code,
+                    lecturerId: c.lecturerId,
+                    enrolledStudentIds: [] // This will be populated by the report generator if needed
+                }))}
+                lecturers={lecturers.map(l => ({
+                    id: l.id,
+                    name: l.name,
+                    email: l.email
+                }))}
+                students={students.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    email: s.email
+                }))}
             />
         </div>
     );

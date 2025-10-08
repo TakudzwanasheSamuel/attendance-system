@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
+import { signupAction } from "@/lib/auth-actions";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -35,8 +36,8 @@ const formSchema = z.object({
 });
 
 export function SignupForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [state, formAction, isPending] = useActionState(signupAction, null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,15 +50,12 @@ export function SignupForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      if (values.role === "lecturer") {
-        router.push("/lecturer/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
-    }, 1000);
+    const formData = new FormData();
+    formData.append('name', values.name);
+    formData.append('email', values.email);
+    formData.append('password', values.password);
+    formData.append('role', values.role);
+    formAction(formData);
   }
 
   return (
@@ -136,10 +134,13 @@ export function SignupForm() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isLoading || isPending}>
+              {(isLoading || isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>
+            {state?.error && (
+              <p className="text-sm text-red-600 text-center">{state.error}</p>
+            )}
             <p className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}
               <Button variant="link" asChild className="p-0 h-auto">

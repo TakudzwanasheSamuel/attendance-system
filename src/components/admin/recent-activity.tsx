@@ -1,45 +1,50 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { attendanceRecords, students, courses, lecturers, attendanceSessions } from "@/lib/mock-data";
 import { formatDistanceToNow } from "date-fns";
 
-export function RecentActivity() {
+interface RecentActivityProps {
+    attendanceRecords: any[];
+    attendanceSessions: any[];
+    students: any[];
+    courses: any[];
+    lecturers: any[];
+}
+
+export function RecentActivity({ attendanceRecords, attendanceSessions, students, courses, lecturers }: RecentActivityProps) {
     const userAvatar = PlaceHolderImages.find(p => p.id === "avatar-1");
 
     // Combine different types of activities and sort them by date
     const activities = [
-        ...attendanceRecords.map(r => ({ type: 'attendance', data: r, date: r.timestamp })),
-        ...attendanceSessions.map(s => ({ type: 'session', data: s, date: s.createdAt })),
-        ...students.slice(0, 2).map(s => ({ type: 'newUser', data: s, date: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24) })) // Mock new users
-    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5); // Get latest 5 activities
+        ...attendanceRecords.map(r => ({ type: 'attendance' as const, data: r, date: new Date((r as any)?.timestamp) })),
+        ...attendanceSessions.map(s => ({ type: 'session' as const, data: s, date: new Date((s as any)?.createdAt) })),
+    ]
+      .filter(a => a.date instanceof Date && !isNaN(a.date.getTime()))
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5); // Get latest 5 activities
 
-    const renderActivity = (activity: (typeof activities)[0]) => {
-        const student = students.find(s => s.id === (activity.data as any).studentId);
-        const course = courses.find(c => c.id === (activity.data as any).courseId);
-        const lecturer = lecturers.find(l => l.id === course?.lecturerId);
-
-        switch (activity.type) {
-            case 'attendance':
-                return (
-                     <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">{student?.name || 'A student'}</span> marked attendance for <span className="font-semibold text-foreground">{course?.name || 'a course'}</span>.
-                    </p>
-                );
-            case 'session':
-                 return (
-                     <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">{lecturer?.name || 'A lecturer'}</span> created a new session for <span className="font-semibold text-foreground">{course?.name || 'a course'}</span>.
-                    </p>
-                );
-            case 'newUser':
-                return (
-                     <p className="text-sm text-muted-foreground">
-                        New user <span className="font-semibold text-foreground">{(activity.data as any).name}</span> signed up as a Student.
-                    </p>
-                );
-            default:
-                return null;
+    const renderActivity = (activity: (typeof activities)[number]) => {
+        if (activity.type === 'attendance') {
+            const record = activity.data as any;
+            const studentName = record?.user?.name ?? 'A student';
+            const courseId = record?.attendancesession?.courseId;
+            const course = courses.find(c => c.id === courseId);
+            return (
+                <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{studentName}</span> marked attendance for <span className="font-semibold text-foreground">{course?.name || 'a course'}</span>.
+                </p>
+            );
         }
+        if (activity.type === 'session') {
+            const session = activity.data as any;
+            const course = courses.find(c => c.id === session?.courseId);
+            const lecturer = lecturers.find(l => l.id === course?.lecturerId);
+            return (
+                <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{lecturer?.name || 'A lecturer'}</span> created a new session for <span className="font-semibold text-foreground">{course?.name || 'a course'}</span>.
+                </p>
+            );
+        }
+        return null;
     }
 
   return (
