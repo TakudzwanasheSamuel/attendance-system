@@ -4,6 +4,12 @@ import { prisma } from './prisma';
 import { Role } from '@prisma/client';
 import { hashPassword } from './auth';
 
+// Simple unique id generator similar to the one used in session creation
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) +
+         Math.random().toString(36).substring(2, 15);
+}
+
 // User Management Actions
 export async function createUser(data: {
   name: string;
@@ -15,6 +21,7 @@ export async function createUser(data: {
   
   return prisma.user.create({
     data: {
+      id: generateId(),
       ...data,
       password: hashedPassword
     }

@@ -1,7 +1,9 @@
 import { AppSidebar, type NavItem } from "@/components/shared/app-sidebar";
 import { UserNav } from "@/components/shared/user-nav";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { students } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 import { LayoutDashboard, History } from "lucide-react";
 import React from "react";
 
@@ -10,12 +12,36 @@ const studentNavItems: NavItem[] = [
   { href: "/student/history", label: "My History", icon: <History /> },
 ];
 
-export default function StudentLayout({
+export default async function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const student = students[0]; // Mock current user
+  // Get the current user from the auth token
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  
+  let studentName = "Student";
+  let studentEmail = "";
+  
+  if (token) {
+    const userPayload = verifyToken(token);
+    
+    if (userPayload && userPayload.role === 'STUDENT') {
+      const student = await prisma.user.findUnique({
+        where: { id: userPayload.id },
+        select: {
+          name: true,
+          email: true
+        }
+      });
+      
+      if (student) {
+        studentName = student.name;
+        studentEmail = student.email;
+      }
+    }
+  }
 
   return (
     <SidebarProvider>
@@ -26,7 +52,7 @@ export default function StudentLayout({
             <SidebarTrigger className="md:hidden"/>
             <h1 className="text-lg font-semibold font-headline">Student Portal</h1>
           </div>
-          <UserNav name={student.name} email={student.email} />
+          <UserNav name={studentName} email={studentEmail} />
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
             {children}

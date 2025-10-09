@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
 
+// Generate a unique ID
+function generateId(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId, email, password } = await request.json();
@@ -97,6 +102,7 @@ export async function POST(request: NextRequest) {
     // Create attendance record
     const attendanceRecord = await prisma.attendancerecord.create({
       data: {
+        id: generateId(),
         sessionId: sessionId,
         studentId: student.id,
         status: 'Present'

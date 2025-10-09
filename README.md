@@ -29,31 +29,50 @@ The system has three distinct user roles, ensuring users only see what's relevan
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
 - **AI Integration**: [Google's Genkit](https://firebase.google.com/docs/genkit)
-- **Database (Proposed)**: [Google Cloud Firestore](https://firebase.google.com/docs/firestore)
+- **Database**: [MySQL](https://www.mysql.com/) with [Prisma ORM](https://www.prisma.io/)
 
 ## Getting Started
 
-To run the application locally, follow these steps:
+📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./SETUP-INSTRUCTIONS.md)**
 
-1. **Install Dependencies**:
+### Quick Start
+
+1. **Clone the repository**:
    ```bash
-   npm install
+   git clone https://github.com/TakudzwanasheSamuel/attendance-system.git
+   cd attendance-system
    ```
 
-2. **Run the Development Server**:
+2. **Install dependencies** (⚠️ Use legacy peer deps flag):
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+
+3. **Set up environment variables**:
+   ```bash
+   cp env.example .env
+   # Edit .env with your database credentials
+   ```
+
+4. **Set up database and seed data**:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   npm run seed
+   ```
+
+5. **Start the development server**:
    ```bash
    npm run dev
    ```
-   This will start the Next.js application, typically on `http://localhost:9002`.
+   The application will be available at `http://localhost:9002`.
 
 ### Demo Login Credentials
 
-You can use the following email addresses on the login page to explore the different roles. Any password will be accepted.
+After seeding the database, you can log in with these accounts:
 
-- Student: student@msu.com
-Lecturer: lecturer@msu.com
-Admin: admin@msu.com
-
- password: student123, lecturer123, or admin123
+- **Admin**: `admin@msu.com` / `password123`
+- **Lecturer**: `kudzai.moyo@msu.com` / `password123` (or any lecturer from seeded data)
+- **Student**: `tendekai.moyo.82@msu.com` / `password123` (or any student from seeded data)
 
  

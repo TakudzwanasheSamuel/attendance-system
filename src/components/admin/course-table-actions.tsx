@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { deleteCourse } from "@/lib/database-actions";
+import { useRouter } from "next/navigation";
 import type { Course, Lecturer, Student } from "@/lib/types";
 import { EditCourseDialog } from "./edit-course-dialog";
 
@@ -35,14 +37,20 @@ export function CourseTableActions({ course, lecturers, students }: CourseTableA
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-  const handleDelete = () => {
-    // Simulate API call
-    toast({
-      title: "Course Deleted",
-      description: `Course "${course.name}" has been deleted.`,
-    });
-    setIsDeleteDialogOpen(false);
+  const handleDelete = async () => {
+    try {
+      await deleteCourse(course.id);
+      toast({
+        title: "Course Deleted",
+        description: `Course "${course.name}" has been deleted.`,
+      });
+      setIsDeleteDialogOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed to delete course", description: err?.message || "Please try again." });
+    }
   };
 
   return (

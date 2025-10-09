@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { createCourse, updateCourse } from "@/lib/database-actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,19 +56,39 @@ export function CourseForm({ course, lecturers, students, closeDialog }: CourseF
     },
   });
   
-  function onSubmit(data: CourseFormValues) {
-    setIsLoading(true);
-    console.log(data);
+  async function onSubmit(data: CourseFormValues) {
+    try {
+      setIsLoading(true);
+      if (course) {
+        await updateCourse(course.id, {
+          name: data.name,
+          code: data.code,
+          lecturerId: data.lecturerId,
+          enrolledStudentIds: data.enrolledStudentIds,
+        });
+      } else {
+        await createCourse({
+          name: data.name,
+          code: data.code,
+          lecturerId: data.lecturerId,
+          enrolledStudentIds: data.enrolledStudentIds,
+        });
+      }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
       toast({
         title: course ? "Course Updated" : "Course Created",
         description: `The course "${data.name}" has been successfully saved.`,
       });
       closeDialog();
-    }, 1000);
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Failed to save course",
+        description: err?.message || "Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -104,21 +125,55 @@ export function CourseForm({ course, lecturers, students, closeDialog }: CourseF
                 control={form.control}
                 name="lecturerId"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Lecturer</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a lecturer" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {lecturers.map(lecturer => (
-                            <SelectItem key={lecturer.id} value={lecturer.id}>{lecturer.name}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Lecturer</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className={cn(
+                                            "w-full justify-between",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                    >
+                                        {field.value
+                                            ? (lecturers.find(l => l.id === field.value)?.name || "Select a lecturer")
+                                            : "Select a lecturer"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search lecturers..." />
+                                    <CommandList>
+                                        <CommandEmpty>No lecturers found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {lecturers.map((lecturer) => (
+                                                <CommandItem
+                                                    key={lecturer.id}
+                                                    value={lecturer.name}
+                                                    onSelect={() => {
+                                                        field.onChange(lecturer.id);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            field.value === lecturer.id ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {lecturer.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
                     </FormItem>
                 )}
             />

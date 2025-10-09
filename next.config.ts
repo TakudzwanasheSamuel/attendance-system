@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  env: {
+    GOOGLE_GENAI_API_KEY: process.env.GOOGLE_GENAI_API_KEY,
+  },
   images: {
     remotePatterns: [
       {

@@ -1,5 +1,6 @@
 import { AttendanceTracker } from "@/components/lecturer/attendance-tracker";
 import { CreateSessionDialog } from "@/components/lecturer/create-session-dialog";
+import { EnrolledStudentsDialog } from "@/components/lecturer/enrolled-students-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
@@ -112,7 +113,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{enrolledStudents.length}</div>
-                <p className="text-xs text-muted-foreground">Total students in this course</p>
+                <p className="text-xs text-muted-foreground mb-3">Total students in this course</p>
+                <EnrolledStudentsDialog students={enrolledStudents} courseName={course.name} />
             </CardContent>
         </Card>
          <Card>

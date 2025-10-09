@@ -10,15 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { CourseTableActions } from "./course-table-actions";
 import { Course } from "@prisma/client";
+import type { Lecturer, Student } from "@/lib/types";
 
 interface CourseTableProps {
   courses: (Course & {
     user: { name: string };
     courseenrollment: { user: { name: string } }[];
   })[];
+  lecturers: Lecturer[];
+  students: Student[];
 }
 
-export function CourseTable({ courses }: CourseTableProps) {
+export function CourseTable({ courses, lecturers, students }: CourseTableProps) {
   // Add safety checks
   if (!courses) {
     return (
@@ -71,7 +74,7 @@ export function CourseTable({ courses }: CourseTableProps) {
                             <TableCell>{course.user?.name ?? '—'}</TableCell>
                             <TableCell>{course.courseenrollment?.length ?? 0}</TableCell>
                             <TableCell className="text-right">
-                                <CourseTableActions course={course} />
+                                <CourseTableActions course={course as any} lecturers={lecturers || []} students={students || []} />
                             </TableCell>
                         </TableRow>
                       );

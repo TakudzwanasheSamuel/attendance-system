@@ -1,5 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 
 interface RecentActivityProps {
@@ -11,7 +10,7 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ attendanceRecords, attendanceSessions, students, courses, lecturers }: RecentActivityProps) {
-    const userAvatar = PlaceHolderImages.find(p => p.id === "avatar-1");
+    
 
     // Combine different types of activities and sort them by date
     const activities = [
@@ -52,7 +51,6 @@ export function RecentActivity({ attendanceRecords, attendanceSessions, students
       {activities.map((activity, index) => (
          <div key={index} className="flex items-center">
             <Avatar className="h-9 w-9">
-            {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="Avatar" />}
             <AvatarFallback>
                 {activity.type === 'attendance' && 'SA'}
                 {activity.type === 'session' && 'LS'}

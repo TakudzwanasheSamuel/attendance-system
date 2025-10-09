@@ -6,10 +6,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { UserTableActions } from "./user-table-actions";
 import { User } from "@prisma/client";
 
@@ -18,7 +17,6 @@ interface UserTableProps {
 }
 
 export function UserTable({ users }: UserTableProps) {
-    const userAvatar = PlaceHolderImages.find(p => p.id === "avatar-1");
   
   return (
     <div className="border rounded-md">
@@ -42,8 +40,7 @@ export function UserTable({ users }: UserTableProps) {
                 <TableCell>
                 <div className="flex items-center gap-3">
                     <Avatar>
-                    {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{(user.name || "").trim().split(/\s+/).map(n => n.charAt(0)).slice(0,2).join("").toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{user.name}</span>
                 </div>

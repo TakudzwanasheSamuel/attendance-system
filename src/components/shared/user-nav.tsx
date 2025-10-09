@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { CreditCard, LogOut, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -22,15 +21,19 @@ interface UserNavProps {
 
 export function UserNav({ name, email }: UserNavProps) {
   const router = useRouter();
-  const userAvatar = PlaceHolderImages.find(p => p.id === "avatar-1");
+  const initials = (name || "").trim()
+    .split(/\s+/)
+    .map((n) => n.charAt(0))
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "U";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={name} data-ai-hint={userAvatar.imageHint}/>}
-            <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -45,17 +48,9 @@ export function UserNav({ name, email }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push('/profile')}>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Billing</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

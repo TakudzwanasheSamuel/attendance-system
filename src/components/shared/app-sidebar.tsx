@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { BookOpenCheck, LogOut } from "lucide-react";
 import {
@@ -35,14 +36,16 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-            <BookOpenCheck className="size-8 text-primary" />
-            <span className={cn(
-                "font-bold text-lg font-headline",
-                !open && "hidden"
-            )}>
-                SMS
-            </span>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-primary/70 shrink-0">
+            <Image src="/logo.png" alt="System Logo" width={40} height={40} className="h-10 w-10 object-cover" priority />
+          </div>
+          <span className={cn(
+            "font-bold text-lg font-headline",
+            !open && "hidden"
+          )}>
+            SMART SMS
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>

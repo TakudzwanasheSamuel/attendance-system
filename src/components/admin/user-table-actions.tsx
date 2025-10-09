@@ -22,10 +22,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import type { Student, Lecturer, Admin } from "@/lib/types";
+import { deleteUser } from "@/lib/database-actions";
+import { useRouter } from "next/navigation";
 import { EditUserDialog } from "./edit-user-dialog";
 
-type User = (Student | Lecturer | Admin) & { role: string };
+type User = { id: string; name: string; email: string; role: string };
 
 interface UserTableActionsProps {
   user: User;
@@ -35,14 +36,20 @@ export function UserTableActions({ user }: UserTableActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-  const handleDelete = () => {
-    // Simulate API call
-    toast({
-      title: "User Deleted",
-      description: `User "${user.name}" has been deleted.`,
-    });
-    setIsDeleteDialogOpen(false);
+  const handleDelete = async () => {
+    try {
+      await deleteUser(user.id);
+      toast({
+        title: "User Deleted",
+        description: `User "${user.name}" has been deleted.`,
+      });
+      setIsDeleteDialogOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed to delete user", description: err?.message || "Please try again." });
+    }
   };
   
   return (
@@ -83,7 +90,7 @@ export function UserTableActions({ user }: UserTableActionsProps) {
             Edit User
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive" disabled={user.role === 'Admin'}>
+          <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive" disabled={user.role === 'ADMIN'}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete User
           </DropdownMenuItem>

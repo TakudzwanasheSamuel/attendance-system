@@ -6,10 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Student } from "@/lib/types";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { CheckCircle } from "lucide-react";
 
 interface AttendanceTrackerProps {
@@ -17,7 +16,6 @@ interface AttendanceTrackerProps {
 }
 
 export function AttendanceTracker({ attendedStudents }: AttendanceTrackerProps) {
-    const studentAvatar = PlaceHolderImages.find(p => p.id === "avatar-2");
   return (
     <Card>
       <CardHeader>
@@ -51,8 +49,7 @@ export function AttendanceTracker({ attendedStudents }: AttendanceTrackerProps) 
                     <TableCell>
                     <div className="flex items-center gap-3">
                         <Avatar>
-                        {studentAvatar && <AvatarImage src={studentAvatar.imageUrl} data-ai-hint={studentAvatar.imageHint}/>}
-                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{(student.name || "").trim().split(/\s+/).map(n => n.charAt(0)).slice(0,2).join("").toUpperCase() || "S"}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{student.name}</span>
                     </div>
