@@ -33,7 +33,7 @@ The system has three distinct user roles, ensuring users only see what's relevan
 
 ## Getting Started
 
-📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./SETUP-INSTRUCTIONS.md)**
+📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./docs/SETUP-INSTRUCTIONS.md)**
 
 ### Quick Start
 
@@ -75,4 +75,26 @@ After seeding the database, you can log in with these accounts:
 - **Lecturer**: `kudzai.moyo@msu.com` / `password123` (or any lecturer from seeded data)
 - **Student**: `tendekai.moyo.82@msu.com` / `password123` (or any student from seeded data)
 
- 
+## 📖 Documentation
+
+All project documentation is organized in the [`docs/`](./docs) folder:
+
+- **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete setup guide
+- **[Database Structure](./docs/database-structure.md)** - Database schema and relationships
+- **[Backend Structure](./docs/backend-structure.md)** - Backend architecture
+- **[Development Roadmap](./docs/development-roadmap.md)** - Project milestones
+- **[User Roles](./docs/users.md)** - User permissions and roles
+- **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
+
+## ✨ Features
+
+- **Dark/Light Mode** - Toggle between themes with system preference support
+- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- **Real-time Updates** - Live attendance tracking during sessions
+- **AI-Powered Reports** - Intelligent insights and analytics
+- **QR Code Support** - Quick attendance marking via QR codes
+- **Role-Based Dashboards** - Customized views for each user type
+
+## 📝 License
+
+This project is licensed under the MIT License.

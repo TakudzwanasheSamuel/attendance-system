@@ -1,5 +1,6 @@
 import { AppSidebar, type NavItem } from "@/components/shared/app-sidebar";
 import { UserNav } from "@/components/shared/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { lecturers } from "@/lib/mock-data";
 import { LayoutDashboard, BarChart3 } from "lucide-react";
@@ -26,7 +27,10 @@ export default function LecturerLayout({
             <SidebarTrigger className="md:hidden"/>
             <h1 className="text-lg font-semibold font-headline">Lecturer Portal</h1>
           </div>
-          <UserNav name={lecturer.name} email={lecturer.email} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav name={lecturer.name} email={lecturer.email} />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
             {children}

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from './prisma';
-import { Role } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { hashPassword } from './auth';
 
 // Simple unique id generator similar to the one used in session creation
@@ -15,7 +15,7 @@ export async function createUser(data: {
   name: string;
   email: string;
   password: string;
-  role: Role;
+  role: user_role;
 }) {
   const hashedPassword = await hashPassword(data.password);
   
@@ -32,7 +32,7 @@ export async function updateUser(id: string, data: {
   name?: string;
   email?: string;
   password?: string;
-  role?: Role;
+  role?: user_role;
 }) {
   const updateData: any = { ...data };
   
@@ -67,6 +67,7 @@ export async function createCourse(data: {
 }) {
   const course = await prisma.course.create({
     data: {
+      id: generateId(),
       name: data.name,
       code: data.code,
       lecturerId: data.lecturerId
@@ -75,7 +76,7 @@ export async function createCourse(data: {
 
   // Create enrollments if students are provided
   if (data.enrolledStudentIds && data.enrolledStudentIds.length > 0) {
-    await prisma.courseEnrollment.createMany({
+    await prisma.courseenrollment.createMany({
       data: data.enrolledStudentIds.map(studentId => ({
         studentId,
         courseId: course.id
@@ -103,13 +104,13 @@ export async function updateCourse(id: string, data: {
   // Update enrollments if provided
   if (data.enrolledStudentIds !== undefined) {
     // Remove existing enrollments
-    await prisma.courseEnrollment.deleteMany({
+    await prisma.courseenrollment.deleteMany({
       where: { courseId: id }
     });
 
     // Create new enrollments
     if (data.enrolledStudentIds.length > 0) {
-      await prisma.courseEnrollment.createMany({
+      await prisma.courseenrollment.createMany({
         data: data.enrolledStudentIds.map(studentId => ({
           studentId,
           courseId: id
@@ -147,8 +148,11 @@ export async function createAttendanceSession(data: {
   code: string;
   expiresAt: Date;
 }) {
-  return prisma.attendanceSession.create({
-    data
+  return prisma.attendancesession.create({
+    data: {
+      id: generateId(),
+      ...data
+    }
   });
 }
 
@@ -161,13 +165,13 @@ export async function getActiveSessions(courseId?: string) {
     whereClause.courseId = courseId;
   }
 
-  return prisma.attendanceSession.findMany({
+  return prisma.attendancesession.findMany({
     where: whereClause,
     include: {
       course: true,
-      records: {
+      attendancerecord: {
         include: {
-          student: true
+          user: true
         }
       }
     },
@@ -181,7 +185,7 @@ export async function markAttendance(data: {
   studentId: string;
   status?: string;
 }) {
-  return prisma.attendanceRecord.upsert({
+  return prisma.attendancerecord.upsert({
     where: {
       sessionId_studentId: {
         sessionId: data.sessionId,
@@ -193,6 +197,7 @@ export async function markAttendance(data: {
       timestamp: new Date()
     },
     create: {
+      id: generateId(),
       sessionId: data.sessionId,
       studentId: data.studentId,
       status: data.status || 'Present'
@@ -201,15 +206,15 @@ export async function markAttendance(data: {
 }
 
 export async function getStudentAttendanceHistory(studentId: string) {
-  return prisma.attendanceRecord.findMany({
+  return prisma.attendancerecord.findMany({
     where: { studentId },
     include: {
-      session: {
+      attendancesession: {
         include: {
           course: true
         }
       },
-      student: true
+      user: true
     },
     orderBy: { timestamp: 'desc' }
   });
@@ -219,14 +224,17 @@ export async function getCourseAttendanceReport(courseId: string) {
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
-      enrollments: {
+      courseenrollment: {
         include: {
-          student: true
+          user: true
         }
       },
-      sessions: {
+      attendancesession: {
         where: {
           expiresAt: { lt: new Date() }
+        },
+        include: {
+          attendancerecord: true
         }
       }
     }
@@ -234,12 +242,12 @@ export async function getCourseAttendanceReport(courseId: string) {
 
   if (!course) return [];
 
-  const students = course.enrollments.map(e => e.student);
-  const sessions = course.sessions;
+  const students = course.courseenrollment.map((e: any) => e.user);
+  const sessions = course.attendancesession;
 
-  return students.map(student => {
-    const attendedCount = sessions.filter(session => 
-      session.records?.some(record => record.studentId === student.id)
+  return students.map((student: any) => {
+    const attendedCount = sessions.filter((session: any) => 
+      session.attendancerecord?.some((record: any) => record.studentId === student.id)
     ).length;
     
     const totalSessions = sessions.length;
