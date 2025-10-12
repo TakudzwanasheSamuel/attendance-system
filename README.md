@@ -31,6 +31,14 @@ The system has three distinct user roles, ensuring users only see what's relevan
 - **AI Integration**: [Google's Genkit](https://firebase.google.com/docs/genkit)
 - **Database**: [MySQL](https://www.mysql.com/) with [Prisma ORM](https://www.prisma.io/)
 
+## 🚀 New Features
+
+### Mobile QR Code Access
+Students can now scan QR codes with their phones to mark attendance! See [MOBILE-SETUP-QUICK-START.md](./MOBILE-SETUP-QUICK-START.md) for 5-minute setup.
+
+### VPN Detection
+System automatically blocks attendance marking through VPNs/proxies to prevent location spoofing. See [VPN-DETECTION-SUMMARY.md](./VPN-DETECTION-SUMMARY.md) for details.
+
 ## Getting Started
 
 📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./docs/SETUP-INSTRUCTIONS.md)**
@@ -99,15 +107,20 @@ All project documentation is organized in the [`docs/`](./docs) folder:
 - **[Backend Structure](./docs/backend-structure.md)** - Backend architecture
 - **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
 - **[Geo-Fencing Implementation](./IMPLEMENTATION-SUMMARY.md)** - Location-based attendance tracking
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection and prevention
+- **[Mobile Access Setup](./docs/MOBILE-ACCESS.md)** - Complete mobile configuration guide
+- **[Mobile Quick Start](./MOBILE-SETUP-QUICK-START.md)** - 5-minute mobile setup guide
 
 ## ✨ Features
 
 - **Dark/Light Mode** - Toggle between themes with system preference support
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- **Mobile-First Design** - Fully responsive, works on all devices
+- **QR Code Scanning** - Students scan QR codes with their phones
 - **Real-time Updates** - Live attendance tracking during sessions
 - **AI-Powered Reports** - Intelligent insights and analytics
-- **QR Code Support** - Quick attendance marking via QR codes
 - **Geo-Fencing** - Location-based attendance verification
+- **VPN Detection** - Prevents attendance marking through VPNs/proxies
+- **PWA Support** - Install as app on mobile devices
 - **Role-Based Dashboards** - Customized views for each user type
 
 ## 📝 License

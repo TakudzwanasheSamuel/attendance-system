@@ -6,6 +6,7 @@ import { markAttendance as markAttendanceDB } from "@/lib/database-actions";
 import { cookies, headers } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { isWithinGeoFence } from "@/lib/geo-utils";
+import { detectVPN, shouldBlockAttendance } from "@/lib/vpn-detection";
 
 interface MarkAttendanceInput {
   sessionCode: string;
@@ -135,6 +136,30 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
     const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0] || 
                       headersList.get('x-real-ip') || 
                       'unknown';
+
+    // VPN Detection
+    const vpnDetection = await detectVPN(ipAddress, userAgent);
+    
+    // Check if VPN should block attendance (strict mode enabled)
+    if (shouldBlockAttendance(vpnDetection, true)) {
+      return {
+        isValidSession: true,
+        isEnrolled: true,
+        validationMessage: "VPN or proxy detected. Please disable your VPN and try again.",
+        vpnDetected: true,
+        vpnDetails: {
+          confidence: vpnDetection.confidence,
+          reasons: vpnDetection.reasons,
+        },
+      };
+    }
+
+    // Add VPN check notes to verification if VPN detected but not blocking
+    if (vpnDetection.isVPN) {
+      verificationNotes.push(
+        `VPN/Proxy suspected (${vpnDetection.confidence} confidence): ${vpnDetection.reasons.join(', ')}`
+      );
+    }
 
     // Generate unique ID
     const id =
