@@ -47,6 +47,53 @@ export async function updateUser(id: string, data: {
 }
 
 export async function deleteUser(id: string) {
+  // Delete related records first to avoid foreign key constraint errors
+  
+  // Delete attendance records
+  await prisma.attendancerecord.deleteMany({
+    where: { studentId: id }
+  });
+  
+  // Delete course enrollments
+  await prisma.courseenrollment.deleteMany({
+    where: { studentId: id }
+  });
+  
+  // Delete attendance sessions (if user is a lecturer)
+  const courses = await prisma.course.findMany({
+    where: { lecturerId: id },
+    select: { id: true }
+  });
+  
+  if (courses.length > 0) {
+    const courseIds = courses.map(c => c.id);
+    
+    // Delete attendance records for these courses
+    await prisma.attendancerecord.deleteMany({
+      where: {
+        attendancesession: {
+          courseId: { in: courseIds }
+        }
+      }
+    });
+    
+    // Delete attendance sessions for these courses
+    await prisma.attendancesession.deleteMany({
+      where: { courseId: { in: courseIds } }
+    });
+    
+    // Delete course enrollments for these courses
+    await prisma.courseenrollment.deleteMany({
+      where: { courseId: { in: courseIds } }
+    });
+    
+    // Delete courses
+    await prisma.course.deleteMany({
+      where: { id: { in: courseIds } }
+    });
+  }
+  
+  // Finally delete the user
   return prisma.user.delete({
     where: { id }
   });

@@ -72,8 +72,23 @@ The system has three distinct user roles, ensuring users only see what's relevan
 After seeding the database, you can log in with these accounts:
 
 - **Admin**: `admin@msu.com` / `password123`
-- **Lecturer**: `kudzai.moyo@msu.com` / `password123` (or any lecturer from seeded data)
-- **Student**: `tendekai.moyo.82@msu.com` / `password123` (or any student from seeded data)
+- **Student**: `tinashe.mazvihwa.40@msu.com` / `password123` (or any student from database)
+- **Lecturer**: Any lecturer email from database (format: `firstname.lastname.##@msu.com`)
+
+**To find more accounts:**
+```bash
+# Check MySQL database
+mysql -u root -p
+USE smart_student_monitoring;
+SELECT email, name, role FROM users LIMIT 10;
+```
+
+All seeded accounts use password: `password123`
+
+**Note:** If login fails, reseed the database:
+```bash
+npm run seed
+```
 
 ## 📖 Documentation
 
@@ -82,9 +97,8 @@ All project documentation is organized in the [`docs/`](./docs) folder:
 - **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete setup guide
 - **[Database Structure](./docs/database-structure.md)** - Database schema and relationships
 - **[Backend Structure](./docs/backend-structure.md)** - Backend architecture
-- **[Development Roadmap](./docs/development-roadmap.md)** - Project milestones
-- **[User Roles](./docs/users.md)** - User permissions and roles
 - **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
+- **[Geo-Fencing Implementation](./IMPLEMENTATION-SUMMARY.md)** - Location-based attendance tracking
 
 ## ✨ Features
 
@@ -93,6 +107,7 @@ All project documentation is organized in the [`docs/`](./docs) folder:
 - **Real-time Updates** - Live attendance tracking during sessions
 - **AI-Powered Reports** - Intelligent insights and analytics
 - **QR Code Support** - Quick attendance marking via QR codes
+- **Geo-Fencing** - Location-based attendance verification
 - **Role-Based Dashboards** - Customized views for each user type
 
 ## 📝 License
