@@ -169,6 +169,13 @@ export async function updateCourse(id: string, data: {
   return course;
 }
 
+export async function reassignCourseLecturer(courseId: string, newLecturerId: string) {
+  return prisma.course.update({
+    where: { id: courseId },
+    data: { lecturerId: newLecturerId }
+  });
+}
+
 export async function deleteCourse(id: string) {
   return prisma.course.delete({
     where: { id }

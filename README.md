@@ -1,26 +1,12 @@
 # Smart Student Monitoring System
 
-This is a full-stack Next.js application designed to streamline and modernize classroom attendance tracking. It provides dedicated portals for Students, Lecturers, and Administrators, each with features tailored to their roles. The system leverages AI to provide insightful reports and simplify complex validation tasks.
+A modern, full-stack attendance tracking system built with Next.js and TypeScript. Features mobile QR code scanning, geofencing, VPN detection, and AI-powered analytics for educational institutions.
 
-## Core Features
+### User Roles
 
-### 1. Role-Based Access Control
-The system has three distinct user roles, ensuring users only see what's relevant to them:
-- **Student**: Can mark attendance and view their own history.
-- **Lecturer**: Manages courses, creates attendance sessions, and views reports for their students.
-- **Administrator**: Has a system-wide view with full control over users, courses, and reporting.
-
-### 2. AI-Powered Reporting & Validation
-- **Comprehensive Reports**: Both Lecturers and Administrators can generate detailed attendance reports using AI. The system analyzes filtered data to produce summaries, identify trends, and offer actionable insights.
-- **Smart Validation**: Student attendance submissions are validated by an AI flow that checks for active session codes and course enrollment simultaneously.
-
-### 3. Real-time Attendance Tracking
-- **Session Codes & QR Codes**: Lecturers can generate unique, time-sensitive codes for each class session.
-- **Live Updates**: When a session is active, lecturers can see students check in, in real-time.
-
-### 4. Full-Featured Management Portals
-- **User Management (Admin)**: Admins can create, view, search, edit, and delete all users in the system.
-- **Course Management (Admin)**: Admins have full control over the course catalog, including creating courses, assigning lecturers, and managing student enrollments.
+- **👨‍🎓 Student** - Mark attendance via QR codes, view attendance history
+- **👨‍🏫 Lecturer** - Create sessions, manage courses, generate reports
+- **👨‍💼 Administrator** - Full system control, user/course management, analytics
 
 ## Technology Stack
 
@@ -31,13 +17,16 @@ The system has three distinct user roles, ensuring users only see what's relevan
 - **AI Integration**: [Google's Genkit](https://firebase.google.com/docs/genkit)
 - **Database**: [MySQL](https://www.mysql.com/) with [Prisma ORM](https://www.prisma.io/)
 
-## 🚀 New Features
+## 🚀 Key Features
 
-### Mobile QR Code Access
-Students can now scan QR codes with their phones to mark attendance! See [MOBILE-SETUP-QUICK-START.md](./MOBILE-SETUP-QUICK-START.md) for 5-minute setup.
+- **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
+- **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
+- **📍 Geofencing** - GPS-based location verification for physical presence
+- **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
+- **⚡ Real-time Updates** - Live attendance tracking during sessions
+- **👥 Role-Based Access** - Separate dashboards for Students, Lecturers, and Admins
 
-### VPN Detection
-System automatically blocks attendance marking through VPNs/proxies to prevent location spoofing. See [VPN-DETECTION-SUMMARY.md](./VPN-DETECTION-SUMMARY.md) for details.
+**Quick Setup:** See [QUICK-START.md](./QUICK-START.md) for mobile access and VPN detection setup.
 
 ## Getting Started
 
@@ -100,28 +89,28 @@ npm run seed
 
 ## 📖 Documentation
 
-All project documentation is organized in the [`docs/`](./docs) folder:
+### Quick Start
+- **[Quick Start Guide](./QUICK-START.md)** - 5-minute setup for mobile access and VPN detection
 
-- **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete setup guide
-- **[Database Structure](./docs/database-structure.md)** - Database schema and relationships
-- **[Backend Structure](./docs/backend-structure.md)** - Backend architecture
+### Setup & Configuration
+- **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete installation guide
+- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Detailed mobile configuration
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection setup
+
+### Technical Reference
+- **[Database Structure](./docs/database-structure.md)** - Schema and relationships
+- **[Backend Structure](./docs/backend-structure.md)** - Architecture overview
+- **[Geofencing](./IMPLEMENTATION-SUMMARY.md)** - Location verification details
 - **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
-- **[Geo-Fencing Implementation](./IMPLEMENTATION-SUMMARY.md)** - Location-based attendance tracking
-- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection and prevention
-- **[Mobile Access Setup](./docs/MOBILE-ACCESS.md)** - Complete mobile configuration guide
-- **[Mobile Quick Start](./MOBILE-SETUP-QUICK-START.md)** - 5-minute mobile setup guide
 
-## ✨ Features
+## ✨ Additional Features
 
-- **Dark/Light Mode** - Toggle between themes with system preference support
-- **Mobile-First Design** - Fully responsive, works on all devices
-- **QR Code Scanning** - Students scan QR codes with their phones
-- **Real-time Updates** - Live attendance tracking during sessions
-- **AI-Powered Reports** - Intelligent insights and analytics
-- **Geo-Fencing** - Location-based attendance verification
-- **VPN Detection** - Prevents attendance marking through VPNs/proxies
-- **PWA Support** - Install as app on mobile devices
-- **Role-Based Dashboards** - Customized views for each user type
+- **🌓 Dark/Light Mode** - Theme toggle with system preference support
+- **📱 PWA Support** - Install as app on mobile home screen
+- **🔄 Real-time Sync** - Live updates across all connected devices
+- **📊 Analytics Dashboard** - Comprehensive attendance statistics
+- **🔐 Secure Authentication** - JWT-based with bcrypt password hashing
+- **🎨 Modern UI** - Clean, intuitive interface with ShadCN components
 
 ## 📝 License
 

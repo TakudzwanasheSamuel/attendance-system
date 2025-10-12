@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Book, GraduationCap, UserSquare, History, CheckCircle } from "lucide-react";
 import { AggregateAttendanceChart } from "@/components/admin/aggregate-attendance-chart";
 import { RecentActivity } from "@/components/admin/recent-activity";
+import { LecturersCoursesList } from "@/components/admin/lecturers-courses-list";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminDashboardPage() {
     // Fetch real data from database
-    const [students, lecturers, courses, attendanceSessions, attendanceRecords] = await Promise.all([
+    const [students, lecturers, courses, attendanceSessions, attendanceRecords, lecturersWithCourses] = await Promise.all([
         prisma.user.findMany({ where: { role: 'STUDENT' } }),
         prisma.user.findMany({ where: { role: 'LECTURER' } }),
         prisma.course.findMany(),
@@ -19,6 +20,21 @@ export default async function AdminDashboardPage() {
                         course: true
                     }
                 }
+            }
+        }),
+        prisma.user.findMany({
+            where: { role: 'LECTURER' },
+            include: {
+                course: {
+                    select: {
+                        id: true,
+                        name: true,
+                        code: true
+                    }
+                }
+            },
+            orderBy: {
+                name: 'asc'
             }
         })
     ]);
@@ -38,6 +54,14 @@ export default async function AdminDashboardPage() {
         name,
         percentage: data.total > 0 ? Math.round((data.attended / data.total) * 100) : 0
     })).slice(0, 10); // Limit for display
+
+    // Transform lecturers data to match component interface
+    const lecturersData = lecturersWithCourses.map(lecturer => ({
+        id: lecturer.id,
+        name: lecturer.name,
+        email: lecturer.email,
+        courses: lecturer.course
+    }));
 
     return (
         <div className="space-y-6">
@@ -100,7 +124,7 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-1 lg:col-span-2">
+                <Card className="col-span-1">
                     <CardHeader>
                          <CardTitle className="font-headline flex items-center gap-2">
                             <History />
@@ -116,6 +140,19 @@ export default async function AdminDashboardPage() {
                             courses={courses}
                             lecturers={lecturers}
                         />
+                    </CardContent>
+                </Card>
+
+                <Card className="col-span-1">
+                    <CardHeader>
+                         <CardTitle className="font-headline flex items-center gap-2">
+                            <UserSquare />
+                            Lecturers & Courses
+                        </CardTitle>
+                        <CardDescription>View lecturers and their assigned courses.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="max-h-[500px] overflow-y-auto">
+                        <LecturersCoursesList lecturers={lecturersData} />
                     </CardContent>
                 </Card>
             </div>

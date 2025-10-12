@@ -1,6 +1,8 @@
-# Mobile Access - Quick Start Guide
+# Quick Start Guide
 
-## Enable Mobile QR Code Scanning in 5 Minutes
+## Setup Mobile Access & VPN Detection in 5 Minutes
+
+This guide will help you enable mobile QR code scanning and VPN detection for your attendance system.
 
 ### Step 1: Find Your Computer's IP Address
 
@@ -185,28 +187,59 @@ http://YOUR_IP:9002
 
 ---
 
+## VPN Detection Setup (Optional - 2 Minutes)
+
+### Enable VPN/Proxy Blocking
+
+1. **Get free API key:**
+   - Visit: https://www.ipqualityscore.com/create-account
+   - Sign up (free: 5,000 requests/month)
+
+2. **Add to `.env`:**
+   ```env
+   IPQUALITYSCORE_API_KEY="your_api_key_here"
+   ```
+
+3. **Restart server:**
+   ```bash
+   npm run dev
+   ```
+
+**Note:** System works without API key but with lower VPN detection accuracy.
+
+---
+
 ## Full Documentation
 
 For detailed information, see:
-- **Complete Guide:** `docs/MOBILE-ACCESS.md`
+- **Mobile Access:** `docs/MOBILE-ACCESS.md`
 - **VPN Detection:** `docs/VPN-DETECTION.md`
-- **Setup Instructions:** `docs/SETUP-INSTRUCTIONS.md`
+- **Setup Guide:** `docs/SETUP-INSTRUCTIONS.md`
 
 ---
 
-## Support
+## Troubleshooting
 
-**Common Issues:**
-1. **Can't access from phone** → Check WiFi and firewall
-2. **QR code doesn't work** → Use manual session code
-3. **Location not detected** → Check browser permissions
-4. **VPN error** → Disable VPN on phone
+**Can't access from phone:**
+- ✓ Same WiFi network?
+- ✓ Correct IP in `.env`?
+- ✓ Firewall allows port 9002?
+- ✓ Server running?
 
-**Need Help?**
-Check the full documentation in `docs/MOBILE-ACCESS.md`
+**QR code doesn't scan:**
+- Improve lighting
+- Use manual session code
+
+**Location not working:**
+- Check browser permissions
+- Enable location services
+
+**VPN detected error:**
+- Disable VPN on phone
+- Use WiFi (not mobile data)
 
 ---
 
-**Status:** ✅ Ready for mobile access
-**Time to Setup:** ~5 minutes
+**Status:** ✅ Ready for production
+**Setup Time:** 5-7 minutes
 **Difficulty:** Easy
