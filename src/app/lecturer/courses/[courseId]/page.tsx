@@ -8,7 +8,7 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   // Await params to fix Next.js 15 async params issue
@@ -21,28 +21,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   const token = cookieStore.get('auth-token')?.value;
   
   if (!token) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
-          <p className="text-muted-foreground">Please log in to access this page.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Verify the token and get user info
   const userPayload = verifyToken(token);
   
   if (!userPayload || userPayload.role !== 'LECTURER') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Get the course with all related data

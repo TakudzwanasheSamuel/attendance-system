@@ -57,13 +57,20 @@ Application runs at `http://localhost:9002`
 
 **Troubleshooting:** Run `npm run seed` if login fails.
 
-## Documentation
+## 📚 Documentation
 
-- **[Quick Start](./QUICK-START.md)** - 5-minute mobile setup
-- **[Features](./FEATURES.md)** - Complete feature list
-- **[Setup Guide](./docs/SETUP-INSTRUCTIONS.md)** - Detailed installation
-- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Network configuration
-- **[VPN Detection](./docs/VPN-DETECTION.md)** - Security setup
+| Document | Description |
+|----------|-------------|
+| **[Quick Start](./QUICK-START.md)** | 5-minute setup guide |
+| **[Features](./FEATURES.md)** | Complete feature overview |
+| **[API Reference](./API.md)** | Complete API documentation |
+| **[Testing Guide](./TESTING.md)** | Comprehensive testing framework |
+| **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** | Detailed installation guide |
+| **[Mobile Access](./docs/MOBILE-ACCESS.md)** | Network configuration |
+| **[Deployment Guide](./docs/DEPLOYMENT.md)** | Production deployment |
+| **[Contributing](./docs/CONTRIBUTING.md)** | Development guidelines |
+
+📖 **[Full Documentation Index](./docs/README.md)** | 📁 **[Project Structure](./PROJECT-STRUCTURE.md)**
 
 ## Performance & Capabilities
 

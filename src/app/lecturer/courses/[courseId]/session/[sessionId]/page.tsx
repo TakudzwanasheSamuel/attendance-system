@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,28 +25,14 @@ export default async function SessionPage({ params }: SessionPageProps) {
   const token = cookieStore.get('auth-token')?.value;
   
   if (!token) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
-          <p className="text-muted-foreground">Please log in to access this page.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Verify the token and get user info
   const userPayload = verifyToken(token);
   
   if (!userPayload || userPayload.role !== 'LECTURER') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Get the session with course and attendance data

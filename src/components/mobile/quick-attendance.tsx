@@ -14,8 +14,6 @@ interface QuickAttendanceProps {
 
 export function QuickAttendance({ className }: QuickAttendanceProps) {
   const [sessionCode, setSessionCode] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -62,8 +60,8 @@ export function QuickAttendance({ className }: QuickAttendanceProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!sessionCode || !email || !password) {
-      toast.error('Please fill in all fields');
+    if (!sessionCode) {
+      toast.error('Please enter session code');
       return;
     }
 
@@ -83,11 +81,9 @@ export function QuickAttendance({ className }: QuickAttendanceProps) {
 
       const { sessionId } = await sessionResponse.json();
 
-      // Mark attendance
+      // Mark attendance using authenticated session
       const attendanceData: any = {
-        sessionId,
-        email,
-        password
+        sessionId
       };
 
       if (location) {
@@ -106,8 +102,6 @@ export function QuickAttendance({ className }: QuickAttendanceProps) {
       if (response.ok) {
         toast.success('Attendance marked successfully!');
         setSessionCode('');
-        setEmail('');
-        setPassword('');
         setLocation(null);
       } else {
         toast.error(result.error || 'Failed to mark attendance');
@@ -129,7 +123,7 @@ export function QuickAttendance({ className }: QuickAttendanceProps) {
           Quick Attendance
         </CardTitle>
         <CardDescription>
-          Enter session code or scan QR code to mark attendance
+          Enter session code to mark your attendance
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -144,28 +138,6 @@ export function QuickAttendance({ className }: QuickAttendanceProps) {
               onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
               className="text-center text-lg font-mono tracking-wider"
               maxLength={6}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your.email@msu.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 

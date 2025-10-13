@@ -108,7 +108,7 @@ export function UserForm({ user, closeDialog }: UserFormProps) {
                     <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., John Doe" {...field} />
+                        <Input placeholder="e.g., Alex Smith" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

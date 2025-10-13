@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import { invalidateStudentCache, invalidateSessionCache } from '@/lib/queries';
+import { cookies } from 'next/headers';
 
 // Generate a unique ID
 function generateId(): string {
@@ -10,14 +11,34 @@ function generateId(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, email, password } = await request.json();
+    // Get authenticated user from cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
-    console.log('🔍 Marking attendance for:', { sessionId, email });
+    const userPayload = verifyToken(token);
+    
+    if (!userPayload || userPayload.role !== 'STUDENT') {
+      return NextResponse.json(
+        { success: false, error: 'Student access required' },
+        { status: 403 }
+      );
+    }
+
+    const { sessionId, latitude, longitude } = await request.json();
+
+    console.log('🔍 Marking attendance for:', { sessionId, studentId: userPayload.id });
 
     // Validate input
-    if (!sessionId || !email || !password) {
+    if (!sessionId) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Session ID is required' },
         { status: 400 }
       );
     }
@@ -45,24 +66,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find the student
+    // Get the authenticated student
     const student = await prisma.user.findUnique({
-      where: { email }
+      where: { id: userPayload.id }
     });
 
     if (!student) {
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, student.password);
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
-        { status: 401 }
+        { success: false, error: 'Student not found' },
+        { status: 404 }
       );
     }
 
@@ -101,13 +113,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Create attendance record
+    const attendanceData: any = {
+      id: generateId(),
+      sessionId: sessionId,
+      studentId: student.id,
+      status: 'Present'
+    };
+
+    // Add location data if provided
+    if (latitude && longitude) {
+      attendanceData.latitude = latitude;
+      attendanceData.longitude = longitude;
+    }
+
     const attendanceRecord = await prisma.attendancerecord.create({
-      data: {
-        id: generateId(),
-        sessionId: sessionId,
-        studentId: student.id,
-        status: 'Present'
-      }
+      data: attendanceData
     });
 
     console.log('✅ Attendance marked successfully:', attendanceRecord.id);

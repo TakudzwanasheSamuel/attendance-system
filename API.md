@@ -120,7 +120,7 @@ GET /api/export/attendance?format=csv&courseId=course123&startDate=2025-10-01
 **CSV Response:**
 ```csv
 Student Name,Student Email,Course Name,Course Code,Session Code,Lecturer,Attendance Status,Timestamp,Session Date
-John Doe,john@msu.com,Mathematics,MATH101,ABC123,Dr. Smith,Present,2025-10-13T10:30:00Z,2025-10-13
+Alex Smith,alex@msu.com,Mathematics,MATH101,ABC123,Dr. Smith,Present,2025-10-13T10:30:00Z,2025-10-13
 ```
 
 **JSON Response:**

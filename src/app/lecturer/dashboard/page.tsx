@@ -2,6 +2,7 @@ import { CourseCard } from "@/components/lecturer/course-card";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import React from "react";
 
 export default async function LecturerDashboardPage() {
@@ -9,29 +10,21 @@ export default async function LecturerDashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   
+  console.log('🔍 Lecturer Dashboard - Token exists:', !!token);
+  
   if (!token) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
-          <p className="text-muted-foreground">Please log in to access the lecturer dashboard.</p>
-        </div>
-      </div>
-    );
+    console.log('❌ No token found, redirecting to login');
+    redirect('/login');
   }
 
   // Verify the token and get user info
   const userPayload = verifyToken(token);
   
+  console.log('🔍 Token verification result:', userPayload ? { id: userPayload.id, role: userPayload.role } : 'null');
+  
   if (!userPayload || userPayload.role !== 'LECTURER') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
-        </div>
-      </div>
-    );
+    console.log('❌ Invalid token or wrong role, redirecting to login');
+    redirect('/login');
   }
 
   console.log('🔍 Loading lecturer dashboard for user:', userPayload);
@@ -42,14 +35,7 @@ export default async function LecturerDashboardPage() {
   });
 
   if (!lecturer) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Lecturer Not Found</h2>
-          <p className="text-muted-foreground">The lecturer account could not be found.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Get lecturer's courses with enrollment data

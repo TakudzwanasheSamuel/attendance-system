@@ -17,30 +17,38 @@ export function EnrollButton({ courseId, courseName, studentId }: EnrollButtonPr
   const router = useRouter();
 
   const handleEnroll = async () => {
+    console.log('🎓 Starting enrollment process:', { courseId, studentId, courseName });
     setIsLoading(true);
     
     try {
+      const requestBody = {
+        courseId,
+        studentId,
+      };
+      
+      console.log('📤 Sending enrollment request:', requestBody);
+      
       const response = await fetch('/api/courses/enroll', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          courseId,
-          studentId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('📥 Response status:', response.status);
       const data = await response.json();
+      console.log('📥 Response data:', data);
 
       if (response.ok) {
         toast.success(`Successfully enrolled in ${courseName}!`);
         router.refresh(); // Refresh the page to update the UI
       } else {
+        console.error('❌ Enrollment failed:', data);
         toast.error(data.error || 'Failed to enroll in course');
       }
     } catch (error) {
-      console.error('Enrollment error:', error);
+      console.error('💥 Enrollment error:', error);
       toast.error('An error occurred while enrolling');
     } finally {
       setIsLoading(false);

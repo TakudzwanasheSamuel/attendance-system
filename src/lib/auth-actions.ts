@@ -40,6 +40,7 @@ export async function loginAction(prevState: any, formData?: FormData) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
@@ -110,6 +111,7 @@ export async function signupAction(prevState: any, formData?: FormData) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 

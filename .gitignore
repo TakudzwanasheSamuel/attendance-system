@@ -9,7 +9,12 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# temporary files
 users.md
+*.tmp
+*.temp
+.cache/
 
 # testing
 /coverage

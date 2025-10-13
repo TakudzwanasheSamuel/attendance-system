@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { signupAction } from "@/lib/auth-actions";
 
 export function SignupForm() {
   const [state, formAction, isPending] = useActionState(signupAction, null);
   const [selectedRole, setSelectedRole] = useState("student");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   // Handle redirect after successful signup
@@ -32,7 +33,7 @@ export function SignupForm() {
             <Input
               id="name"
               name="name"
-              placeholder="John Doe"
+              placeholder="Alex Smith"
               required
               minLength={2}
             />
@@ -51,14 +52,33 @@ export function SignupForm() {
           
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              required
-              minLength={6}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isPending}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                <span className="sr-only">
+                  {showPassword ? "Hide password" : "Show password"}
+                </span>
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-3">
