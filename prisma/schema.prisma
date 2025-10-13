@@ -43,6 +43,8 @@ model attendancerecord {
 
   @@unique([sessionId, studentId], map: "AttendanceRecord_sessionId_studentId_key")
   @@index([studentId], map: "AttendanceRecord_studentId_fkey")
+  @@index([timestamp], map: "AttendanceRecord_timestamp_idx")
+  @@index([studentId, timestamp], map: "AttendanceRecord_student_timestamp_idx")
   @@map("attendance_records")
 }
 
@@ -61,6 +63,8 @@ model attendancesession {
   course           course             @relation(fields: [courseId], references: [id], map: "AttendanceSession_courseId_fkey")
 
   @@index([courseId], map: "AttendanceSession_courseId_fkey")
+  @@index([expiresAt], map: "AttendanceSession_expiresAt_idx")
+  @@index([courseId, expiresAt], map: "AttendanceSession_course_expires_idx")
   @@map("attendance_sessions")
 }
 
@@ -86,6 +90,7 @@ model courseenrollment {
 
   @@id([studentId, courseId])
   @@index([courseId], map: "CourseEnrollment_courseId_fkey")
+  @@index([studentId, courseId], map: "CourseEnrollment_student_course_idx")
   @@map("course_enrollments")
 }
 

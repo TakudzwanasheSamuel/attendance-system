@@ -5,11 +5,12 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
-import { LayoutDashboard, History } from "lucide-react";
+import { LayoutDashboard, History, BookOpen } from "lucide-react";
 import React from "react";
 
 const studentNavItems: NavItem[] = [
   { href: "/student/dashboard", label: "Dashboard", icon: <LayoutDashboard /> },
+  { href: "/student/courses", label: "Course Enrollment", icon: <BookOpen /> },
   { href: "/student/history", label: "My History", icon: <History /> },
 ];
 

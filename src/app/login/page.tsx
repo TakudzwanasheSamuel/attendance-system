@@ -31,8 +31,6 @@ export default function LoginPage() {
           </p>
         </div>
         
-        {/* Removed demo credentials notice */}
-
         <LoginForm />
       </div>
     </div>

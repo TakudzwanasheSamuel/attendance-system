@@ -9,6 +9,7 @@ import { ArrowLeft, Copy, QrCode, Users, Clock, CheckCircle } from "lucide-react
 import Link from "next/link";
 import { QRCodeGenerator } from "@/components/lecturer/qr-code-generator";
 import { CopyButton } from "@/components/lecturer/copy-button";
+import { LiveAttendance } from "@/components/lecturer/live-attendance";
 
 interface SessionPageProps {
   params: Promise<{ courseId: string; sessionId: string }>;
@@ -200,37 +201,22 @@ export default async function SessionPage({ params }: SessionPageProps) {
         </CardContent>
       </Card>
 
-      {/* Recent Attendance */}
-      {session.attendancerecord.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Attendance</CardTitle>
-            <CardDescription>
-              Students who have marked their attendance
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {session.attendancerecord.slice(0, 10).map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <div>
-                    <p className="font-medium">{record.user.name}</p>
-                    <p className="text-sm text-muted-foreground">{record.user.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(record.timestamp).toLocaleTimeString()}
-                    </p>
-                    <Badge variant="outline" className="text-xs">
-                      {record.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Live Attendance */}
+      <LiveAttendance 
+        sessionId={sessionId}
+        initialData={{
+          sessionId,
+          count: session.attendancerecord.length,
+          records: session.attendancerecord.map(record => ({
+            id: record.id,
+            studentName: record.user.name,
+            studentEmail: record.user.email,
+            timestamp: record.timestamp.toISOString(),
+            status: record.status
+          })),
+          lastUpdate: new Date().toISOString()
+        }}
+      />
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { BookOpen, Calendar, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { MarkAttendanceForm } from "@/components/student/mark-attendance-form";
+import { QuickAttendance } from "@/components/mobile/quick-attendance";
+import { redirect } from "next/navigation";
+import { getStudentDashboardData } from "@/lib/queries";
 
 export default async function StudentDashboardPage() {
   // Get the current user from the auth token
@@ -12,60 +14,20 @@ export default async function StudentDashboardPage() {
   const token = cookieStore.get('auth-token')?.value;
   
   if (!token) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
-          <p className="text-muted-foreground">Please log in to access this page.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
   // Verify the token and get user info
   const userPayload = verifyToken(token);
   
   if (!userPayload || userPayload.role !== 'STUDENT') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only accessible to students.</p>
-        </div>
-      </div>
-    );
+    redirect('/login');
   }
 
-  // Get student data
-  const student = await prisma.user.findUnique({
-    where: { id: userPayload.id },
-    include: {
-      courseenrollment: {
-        include: {
-          course: {
-            include: {
-              user: true // lecturer info
-            }
-          }
-        }
-      },
-      attendancerecord: {
-        include: {
-          attendancesession: {
-            include: {
-              course: true
-            }
-          }
-        },
-        orderBy: {
-          timestamp: 'desc'
-        },
-        take: 5 // Get last 5 attendance records
-      }
-    }
-  });
+  // Get optimized dashboard data with caching
+  const dashboardData = await getStudentDashboardData(userPayload.id);
 
-  if (!student) {
+  if (!dashboardData.student) {
     return (
       <div className="space-y-6">
         <div>
@@ -76,19 +38,7 @@ export default async function StudentDashboardPage() {
     );
   }
 
-  const enrolledCourses = student.courseenrollment;
-  const totalAttendance = student.attendancerecord.length;
-  
-  // Calculate attendance rate
-  const totalSessions = await prisma.attendancesession.count({
-    where: {
-      courseId: {
-        in: enrolledCourses.map(e => e.courseId)
-      }
-    }
-  });
-  
-  const attendanceRate = totalSessions > 0 ? ((totalAttendance / totalSessions) * 100).toFixed(1) : '0';
+  const { student, enrolledCourses, totalAttendance, totalSessionCount, attendanceRate } = dashboardData;
 
   return (
     <div className="space-y-6">
@@ -115,7 +65,7 @@ export default async function StudentDashboardPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSessions}</div>
+            <div className="text-2xl font-bold">{totalSessionCount}</div>
             <p className="text-xs text-muted-foreground">Across all courses</p>
           </CardContent>
         </Card>
@@ -145,8 +95,8 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
-      {/* Mark Attendance Section */}
-      <MarkAttendanceForm />
+      {/* Quick Attendance Section */}
+      <QuickAttendance />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card key="courses-list">
@@ -156,7 +106,12 @@ export default async function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             {enrolledCourses.length === 0 ? (
-              <p className="text-sm text-muted-foreground">You are not enrolled in any courses yet.</p>
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground mb-3">You are not enrolled in any courses yet.</p>
+                <Link href="/student/courses">
+                  <p className="text-sm text-blue-600 hover:underline">Browse available courses →</p>
+                </Link>
+              </div>
             ) : (
               <div className="space-y-3">
                 {enrolledCourses.map((enrollment) => (
@@ -168,6 +123,9 @@ export default async function StudentDashboardPage() {
                     </div>
                   </div>
                 ))}
+                <Link href="/student/courses" className="block mt-4">
+                  <p className="text-sm text-blue-600 hover:underline">Manage course enrollments →</p>
+                </Link>
               </div>
             )}
           </CardContent>

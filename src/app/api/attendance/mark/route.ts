@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
+import { invalidateStudentCache, invalidateSessionCache } from '@/lib/queries';
 
 // Generate a unique ID
 function generateId(): string {
@@ -110,6 +111,10 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('✅ Attendance marked successfully:', attendanceRecord.id);
+
+    // Invalidate relevant caches
+    invalidateStudentCache(student.id);
+    invalidateSessionCache(sessionId);
 
     return NextResponse.json({
       success: true,

@@ -7,6 +7,9 @@
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/logo.png",
@@ -28,7 +31,31 @@
       "name": "Mark Attendance",
       "short_name": "Mark",
       "description": "Quickly mark your attendance",
-      "url": "/student",
+      "url": "/student/dashboard",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Course Enrollment",
+      "short_name": "Enroll",
+      "description": "Browse and enroll in courses",
+      "url": "/student/courses",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Lecturer Dashboard",
+      "short_name": "Teach",
+      "description": "Manage attendance sessions",
+      "url": "/lecturer/dashboard",
       "icons": [
         {
           "src": "/logo.png",
@@ -36,5 +63,10 @@
         }
       ]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
