@@ -136,10 +136,14 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
       distance = geoCheck.distance;
 
       if (!geoCheck.isWithin) {
-        isVerified = false;
-        verificationNotes.push(
-          `Location verification failed: ${Math.round(geoCheck.distance)}m from venue (max: ${session.radiusMeters}m)`
-        );
+        // Block attendance if outside the geofence
+        return {
+          isValidSession: true,
+          isEnrolled: true,
+          validationMessage: `You are too far from the session location. You are ${Math.round(geoCheck.distance)}m away (maximum allowed: ${session.radiusMeters || 50}m). Please move closer to record attendance.`,
+          locationBlocked: true,
+          distance: Math.round(geoCheck.distance),
+        };
       }
     }
 

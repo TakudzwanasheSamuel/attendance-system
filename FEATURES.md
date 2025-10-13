@@ -20,8 +20,9 @@
 **Geofencing**
 - GPS-based location verification
 - Fixed 50-meter radius for precise attendance
+- Blocks attendance if student is outside radius
 - Haversine formula for distance calculation
-- Flags out-of-range attempts for review
+- Shows exact distance to help students locate venue
 
 **Authentication**
 - JWT token-based authentication

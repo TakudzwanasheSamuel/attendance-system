@@ -21,7 +21,7 @@ A modern, full-stack attendance tracking system built with Next.js and TypeScrip
 
 - **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
 - **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
-- **📍 Geofencing** - GPS-based location verification within 50 meters
+- **📍 Geofencing** - GPS-based location verification (students must be within 50 meters)
 - **⏱️ Flexible Session Timing** - Lecturers set start delays (0-60 min) and duration (1-180 min)
 - **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
 - **⚡ Real-time Updates** - Live attendance tracking during sessions
