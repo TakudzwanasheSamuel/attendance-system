@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,6 +13,15 @@ import { signupAction } from "@/lib/auth-actions";
 
 export function SignupForm() {
   const [state, formAction, isPending] = useActionState(signupAction, null);
+  const [selectedRole, setSelectedRole] = useState("student");
+  const router = useRouter();
+
+  // Handle redirect after successful signup
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      router.push(state.redirectTo);
+    }
+  }, [state, router]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -53,7 +63,11 @@ export function SignupForm() {
           
           <div className="space-y-3">
             <Label>I am a...</Label>
-            <RadioGroup name="role" defaultValue="student" className="flex space-x-4" required>
+            <RadioGroup 
+              value={selectedRole} 
+              onValueChange={setSelectedRole}
+              className="flex space-x-4"
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="student" id="student" />
                 <Label htmlFor="student" className="font-normal cursor-pointer">Student</Label>
@@ -63,6 +77,8 @@ export function SignupForm() {
                 <Label htmlFor="lecturer" className="font-normal cursor-pointer">Lecturer</Label>
               </div>
             </RadioGroup>
+            {/* Hidden input to ensure role is submitted with form */}
+            <input type="hidden" name="role" value={selectedRole} />
           </div>
         </CardContent>
         

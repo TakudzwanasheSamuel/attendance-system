@@ -1,12 +1,12 @@
 # Smart Student Monitoring System
 
-A modern, full-stack attendance tracking system built with Next.js and TypeScript. Features mobile QR code scanning, geofencing, VPN detection, and AI-powered analytics for educational institutions.
+A comprehensive, production-ready attendance tracking system built with Next.js 15 and TypeScript. Designed for educational institutions, it combines mobile QR code scanning, precise geofencing (50m radius), VPN detection, and AI-powered analytics to ensure accurate and secure attendance management.
 
-### User Roles
+## 👥 User Roles
 
-- **👨‍🎓 Student** - Mark attendance via QR codes, view attendance history
-- **👨‍🏫 Lecturer** - Create sessions, manage courses, generate reports
-- **👨‍💼 Administrator** - Full system control, user/course management, analytics
+- **👨‍🎓 Student** - Scan QR codes to mark attendance, view personal attendance history and statistics
+- **👨‍🏫 Lecturer** - Create timed sessions, monitor live attendance, generate AI-powered reports
+- **👨‍💼 Administrator** - Manage users and courses, view system-wide analytics, configure settings
 
 ## Technology Stack
 
@@ -19,15 +19,22 @@ A modern, full-stack attendance tracking system built with Next.js and TypeScrip
 
 ## 🚀 Key Features
 
-- **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
-- **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
-- **📍 Geofencing** - GPS-based location verification (students must be within 50 meters)
-- **⏱️ Flexible Session Timing** - Lecturers set start delays (0-60 min) and duration (1-180 min)
-- **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
-- **⚡ Real-time Updates** - Live attendance tracking during sessions
-- **👥 Role-Based Access** - Separate dashboards for Students, Lecturers, and Admins
+### Security & Verification
+- **📍 Strict Geofencing** - Enforces 50-meter radius requirement; students outside this range are blocked from recording attendance
+- **🔒 VPN/Proxy Detection** - Multi-layer detection system blocks attendance through VPNs to prevent location spoofing
+- **🔐 Secure Authentication** - JWT-based authentication with bcrypt password hashing
 
-**Quick Setup:** See [QUICK-START.md](./QUICK-START.md) for mobile access and VPN detection setup.
+### Session Management
+- **⏱️ Flexible Timing** - Configure session start delays (0-60 min) and duration (1-180 min)
+- **📱 Mobile QR Codes** - Students scan QR codes with phone cameras (no app installation required)
+- **⚡ Real-time Tracking** - Live attendance monitoring with instant updates
+
+### Intelligence & Analytics
+- **🤖 AI-Powered Reports** - Google Gemini generates intelligent attendance insights and recommendations
+- **📊 Comprehensive Analytics** - Track attendance patterns, trends, and statistics
+- **👥 Role-Based Dashboards** - Customized interfaces for Students, Lecturers, and Administrators
+
+**⚡ Quick Setup:** See [QUICK-START.md](./QUICK-START.md) for 5-minute mobile access configuration.
 
 ## Getting Started
 
@@ -65,54 +72,74 @@ A modern, full-stack attendance tracking system built with Next.js and TypeScrip
    ```
    The application will be available at `http://localhost:9002`.
 
-### Demo Login Credentials
+### 🔑 Demo Login Credentials
 
-After seeding the database, you can log in with these accounts:
+After seeding the database, use these test accounts:
 
-- **Admin**: `admin@msu.com` / `password123`
-- **Student**: `tinashe.mazvihwa.40@msu.com` / `password123` (or any student from database)
-- **Lecturer**: Any lecturer email from database (format: `firstname.lastname.##@msu.com`)
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | `admin@msu.com` | `password123` |
+| **Student** | `tinashe.mazvihwa.40@msu.com` | `password123` |
+| **Lecturer** | Any lecturer from database | `password123` |
 
-**To find more accounts:**
+**Find all accounts:**
 ```bash
-# Check MySQL database
 mysql -u root -p
 USE smart_student_monitoring;
 SELECT email, name, role FROM users LIMIT 10;
 ```
 
-All seeded accounts use password: `password123`
-
-**Note:** If login fails, reseed the database:
+**Troubleshooting:** If login fails, reseed the database:
 ```bash
 npm run seed
 ```
 
 ## 📖 Documentation
 
-### Quick Start
-- **[Quick Start Guide](./QUICK-START.md)** - 5-minute setup for mobile access and VPN detection
-
-### Setup & Configuration
+### 🚀 Getting Started
+- **[Quick Start Guide](./QUICK-START.md)** - 5-minute mobile access setup
 - **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete installation guide
-- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Detailed mobile configuration
-- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection setup
+- **[Features Overview](./FEATURES.md)** - Detailed feature documentation
 
-### Technical Reference
-- **[Database Structure](./docs/database-structure.md)** - Schema and relationships
-- **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
+### 🔧 Configuration
+- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - WiFi, hotspot, and mobile data setup
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - Configure VPN/proxy blocking
+
+### 📚 Technical Reference
+- **[Database Structure](./docs/database-structure.md)** - Complete schema documentation
+- **[Database SQL](./docs/database.sql)** - Manual database setup
 
 ## ✨ Additional Features
 
-- **🌓 Dark/Light Mode** - Theme toggle with system preference support
-- **📱 PWA Support** - Install as app on mobile home screen
-- **🔄 Real-time Sync** - Live updates across all connected devices
-- **📊 Analytics Dashboard** - Comprehensive attendance statistics
-- **🔐 Secure Authentication** - JWT-based with bcrypt password hashing
-- **🎨 Modern UI** - Clean, intuitive interface with ShadCN components
-- **⏰ Session Scheduling** - Configure when students can start recording attendance
-- **📏 Precise Geofencing** - 50-meter radius for accurate location verification
+### User Experience
+- **🌓 Dark/Light Mode** - Automatic theme switching with system preference detection
+- **📱 PWA Support** - Install as native app on mobile devices
+- **🎨 Modern UI** - Clean, intuitive interface built with ShadCN UI components
+- **♿ Accessibility** - WCAG compliant with keyboard navigation support
+
+### Technical Excellence
+- **🔄 Real-time Sync** - WebSocket-based live updates across all devices
+- **⚡ Performance** - Server-side rendering with optimized bundle sizes
+- **🛡️ Security** - OWASP best practices, SQL injection prevention
+- **📈 Scalability** - Efficient database queries with proper indexing
+
+### Deployment Options
+- **☁️ Cloud Ready** - Deploy to Vercel, Railway, or Render
+- **🌐 Network Flexible** - Works with WiFi, hotspot, or mobile data (when deployed)
+- **🔧 Configurable** - Environment-based configuration for all environments
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
 This project is licensed under the MIT License.
+
+## 📧 Support
+
+For issues, questions, or feature requests, please open an issue on GitHub.
+
+---
+
+**Built with ❤️ for educational institutions**

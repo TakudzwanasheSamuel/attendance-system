@@ -114,13 +114,13 @@ export async function signupAction(prevState: any, formData?: FormData) {
     });
 
     console.log('🎯 Determining redirect path for role:', user.role);
-    // Redirect based on role
+    // Return success with redirect path
     if (user.role === 'LECTURER') {
       console.log('✅ Redirecting to lecturer dashboard');
-      redirect('/lecturer/dashboard');
+      return { success: true, redirectTo: '/lecturer/dashboard' };
     } else {
       console.log('✅ Redirecting to student dashboard');
-      redirect('/student/dashboard');
+      return { success: true, redirectTo: '/student/dashboard' };
     }
   } catch (error: any) {
     console.error('💥 Signup error:', error);
