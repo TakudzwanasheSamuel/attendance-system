@@ -10,12 +10,25 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ attendanceRecords, attendanceSessions, students, courses, lecturers }: RecentActivityProps) {
-    
+    // Only show activities from the last 24 hours to avoid showing old seeded data
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Filter attendance records to only recent ones
+    const recentAttendanceRecords = attendanceRecords.filter(r => {
+        const recordDate = new Date((r as any)?.timestamp);
+        return recordDate >= twentyFourHoursAgo;
+    });
+
+    // Filter sessions to only recent ones
+    const recentSessions = attendanceSessions.filter(s => {
+        const sessionDate = new Date((s as any)?.createdAt);
+        return sessionDate >= twentyFourHoursAgo;
+    });
 
     // Combine different types of activities and sort them by date
     const activities = [
-        ...attendanceRecords.map(r => ({ type: 'attendance' as const, data: r, date: new Date((r as any)?.timestamp) })),
-        ...attendanceSessions.map(s => ({ type: 'session' as const, data: s, date: new Date((s as any)?.createdAt) })),
+        ...recentAttendanceRecords.map(r => ({ type: 'attendance' as const, data: r, date: new Date((r as any)?.timestamp) })),
+        ...recentSessions.map(s => ({ type: 'session' as const, data: s, date: new Date((s as any)?.createdAt) })),
     ]
       .filter(a => a.date instanceof Date && !isNaN(a.date.getTime()))
       .sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -48,23 +61,30 @@ export function RecentActivity({ attendanceRecords, attendanceSessions, students
 
   return (
     <div className="space-y-8">
-      {activities.map((activity, index) => (
-         <div key={index} className="flex items-center">
-            <Avatar className="h-9 w-9">
-            <AvatarFallback>
-                {activity.type === 'attendance' && 'SA'}
-                {activity.type === 'session' && 'LS'}
-                {activity.type === 'newUser' && 'NU'}
-            </AvatarFallback>
-            </Avatar>
-            <div className="ml-4 space-y-1">
-                {renderActivity(activity)}
-                <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(activity.date, { addSuffix: true })}
-                </p>
-            </div>
-      </div>
-      ))}
+      {activities.length > 0 ? (
+        activities.map((activity, index) => (
+           <div key={index} className="flex items-center">
+              <Avatar className="h-9 w-9">
+              <AvatarFallback>
+                  {activity.type === 'attendance' && 'SA'}
+                  {activity.type === 'session' && 'LS'}
+                  {activity.type === 'newUser' && 'NU'}
+              </AvatarFallback>
+              </Avatar>
+              <div className="ml-4 space-y-1">
+                  {renderActivity(activity)}
+                  <p className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(activity.date, { addSuffix: true })}
+                  </p>
+              </div>
+        </div>
+        ))
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">No recent activity in the last 24 hours.</p>
+          <p className="text-xs text-muted-foreground mt-1">Activity will appear here when students mark attendance or lecturers create sessions.</p>
+        </div>
+      )}
     </div>
   );
 }

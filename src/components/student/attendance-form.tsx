@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, EyeOff, MapPin, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getUserLocation, type Location } from "@/lib/geo-utils";
 
 const attendanceSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -32,6 +33,9 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
     success: boolean;
     message: string;
   } | null>(null);
+  const [location, setLocation] = useState<Location | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AttendanceFormData>({
@@ -41,6 +45,36 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
       password: "",
     },
   });
+
+  // Capture location on component mount
+  useEffect(() => {
+    const captureLocation = async () => {
+      if (!isActive) return;
+      
+      setIsGettingLocation(true);
+      setLocationError(null);
+      
+      try {
+        const userLocation = await getUserLocation();
+        setLocation(userLocation);
+        console.log('📍 Location captured:', userLocation);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to get location';
+        setLocationError(errorMessage);
+        console.error('❌ Location error:', errorMessage);
+        
+        toast({
+          variant: "destructive",
+          title: "Location Required",
+          description: "Please enable location access to mark attendance.",
+        });
+      } finally {
+        setIsGettingLocation(false);
+      }
+    };
+
+    captureLocation();
+  }, [isActive, toast]);
 
   const onSubmit = async (data: AttendanceFormData) => {
     if (!isActive) {
@@ -52,20 +86,38 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
       return;
     }
 
+    // Check if location is required but not available
+    if (!location && !locationError) {
+      toast({
+        variant: "destructive",
+        title: "Location Required",
+        description: "Please wait for location to be captured or enable location access.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setResult(null);
 
     try {
+      const requestBody: any = {
+        sessionId,
+        email: data.email,
+        password: data.password,
+      };
+
+      // Include location if available
+      if (location) {
+        requestBody.latitude = location.latitude;
+        requestBody.longitude = location.longitude;
+      }
+
       const response = await fetch('/api/attendance/mark', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          sessionId,
-          email: data.email,
-          password: data.password,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
@@ -183,10 +235,39 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
           </p>
         </div>
 
+        {/* Location Status */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Location Status
+          </Label>
+          {isGettingLocation ? (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm text-blue-800">Getting your location...</span>
+            </div>
+          ) : location ? (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-green-800">
+                Location captured successfully
+              </span>
+            </div>
+          ) : locationError ? (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <div className="flex-1">
+                <span className="text-sm text-red-800 block">Location access required</span>
+                <span className="text-xs text-red-600">{locationError}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isLoading || !isActive}
+          disabled={isLoading || !isActive || (!location && !locationError)}
         >
           {isLoading ? (
             <>
