@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User } from "@prisma/client";
+import { user } from "@prisma/client";
 import { createUser, updateUser } from "@/lib/database-actions";
 
 interface UserFormProps {
-    user?: User;
+    user?: user;
     closeDialog: () => void;
 }
 

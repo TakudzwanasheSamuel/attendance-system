@@ -6,7 +6,7 @@ import { UserSearch } from "@/components/admin/user-search";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User } from "@prisma/client";
+import { user } from "@prisma/client";
 
 export default async function UserManagementPage() {
     const users = await getAllUsers();

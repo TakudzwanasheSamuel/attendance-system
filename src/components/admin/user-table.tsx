@@ -10,10 +10,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { UserTableActions } from "./user-table-actions";
-import { User } from "@prisma/client";
+import { user } from "@prisma/client";
 
 interface UserTableProps {
-  users: User[];
+  users: user[];
 }
 
 export function UserTable({ users }: UserTableProps) {
@@ -40,7 +40,7 @@ export function UserTable({ users }: UserTableProps) {
                 <TableCell>
                 <div className="flex items-center gap-3">
                     <Avatar>
-                    <AvatarFallback>{(user.name || "").trim().split(/\s+/).map(n => n.charAt(0)).slice(0,2).join("").toUpperCase() || "U"}</AvatarFallback>
+                    <AvatarFallback>{(user.name || "").trim().split(/\s+/).map((n: string) => n.charAt(0)).slice(0,2).join("").toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{user.name}</span>
                 </div>

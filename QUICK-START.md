@@ -1,245 +1,120 @@
 # Quick Start Guide
 
-## Setup Mobile Access & VPN Detection in 5 Minutes
+**Enable mobile QR scanning in 5 minutes**
 
-This guide will help you enable mobile QR code scanning and VPN detection for your attendance system.
+## 1. Find Your IP Address
 
-### Step 1: Find Your Computer's IP Address
-
-**Windows:**
 ```bash
+# Windows
 ipconfig
-```
-Look for "IPv4 Address" (e.g., `192.168.1.100`)
 
-**Mac/Linux:**
-```bash
+# Mac/Linux  
 ifconfig
 ```
-Look for your local IP (e.g., `192.168.1.100`)
+Look for IPv4 Address (e.g., `192.168.1.100`)
 
-### Step 2: Update Your .env File
+## 2. Update Environment
 
-Open `.env` and add/update:
-
+Edit `.env` file:
 ```env
 NEXT_PUBLIC_BASE_URL="http://192.168.1.100:9002"
 ```
+*Replace with your actual IP*
 
-Replace `192.168.1.100` with YOUR actual IP address from Step 1.
+## 3. Configure Firewall (Windows)
 
-### Step 3: Allow Firewall Access (Windows Only)
+1. Open Windows Defender Firewall
+2. Advanced settings → Inbound Rules → New Rule
+3. Port → 9002 → Allow connection
+4. Name: "Attendance System"
 
-**Windows:**
-1. Search for "Windows Defender Firewall"
-2. Click "Advanced settings"
-3. Click "Inbound Rules" → "New Rule"
-4. Select "Port" → Next
-5. Enter port `9002` → Next
-6. Select "Allow the connection" → Next
-7. Check all profiles → Next
-8. Name it "Attendance System" → Finish
+*Mac/Linux: Usually no setup needed*
 
-**Mac/Linux:** Usually no configuration needed.
-
-### Step 4: Restart Your Server
+## 4. Start & Test
 
 ```bash
 npm run dev
 ```
 
-### Step 5: Test It!
+**Test on phone:**
+1. Connect to same WiFi
+2. Browse to `http://YOUR_IP:9002`
+3. Should see attendance system
 
-1. **On your phone**, connect to the **same WiFi** as your computer
-2. Open your phone's browser
-3. Go to: `http://YOUR_IP:9002` (use your IP from Step 1)
-4. You should see the attendance system!
+## 5. QR Code Usage
 
-### Step 6: Use QR Codes
+1. Login as lecturer
+2. Create session → QR code appears
+3. Students scan with phone camera
+4. Attendance page opens automatically
 
-1. Log in as a lecturer
-2. Create an attendance session
-3. The QR code will now work on mobile phones!
-4. Students scan the QR code with their phone camera
-5. The attendance page opens automatically
+## Student Usage
 
----
+**Scanning QR Code:**
+- iPhone: Camera app → Point at QR → Tap notification
+- Android: Camera app → Point at QR → Tap link
 
-## How Students Use It
-
-### Scanning QR Code
-
-**iPhone:**
-1. Open Camera app
-2. Point at QR code
-3. Tap the notification
-4. Safari opens the page
-
-**Android:**
-1. Open Camera app
-2. Point at QR code
-3. Tap the link
-4. Chrome opens the page
-
-### Marking Attendance
-
-1. Scan QR code (or manually enter URL)
-2. Allow location permission when prompted
-3. Attendance is marked automatically
-4. Done!
-
----
+**Marking Attendance:**
+1. Scan QR code (or enter URL manually)
+2. Allow location permission
+3. Attendance marked automatically
 
 ## Troubleshooting
 
-### Phone Can't Access the System
+**Can't access system:**
+- ✅ Same WiFi network?
+- ✅ Correct IP in `.env`?
+- ✅ Firewall allows port 9002?
+- ✅ Server running?
 
-**Check:**
-- ✅ Phone and computer on **same WiFi**
-- ✅ `.env` has correct IP address
-- ✅ Firewall allows port 9002
-- ✅ Server is running (`npm run dev`)
-
-**Test:** Try accessing `http://YOUR_IP:9002` in phone browser
-
-### QR Code Doesn't Scan
-
-**Solutions:**
+**QR code issues:**
 - Improve lighting
 - Hold phone steady
-- Move closer/further from screen
-- Use manual session code entry instead
+- Use manual session code
 
-### Location Not Working
+**Location not working:**
+- iOS: Settings → Privacy → Location → Safari → Allow
+- Android: Settings → Apps → Chrome → Permissions → Location
 
-**iOS:** Settings → Privacy → Location Services → Safari → "While Using"
-**Android:** Settings → Apps → Chrome → Permissions → Location → Allow
+**VPN detected error:**
+- Disable VPN apps
+- Use WiFi (not mobile data)
 
-### VPN Blocking
+## Network Requirements
 
-If you see "VPN detected" error:
-- Disable any VPN apps on your phone
-- Use WiFi instead of mobile data
-- Disable proxy settings
+**Local Development:**
+- ✅ Same WiFi network required
+- ❌ Mobile data won't work
 
----
+**Production:**
+- Deploy to cloud service for internet access
 
-## Important Notes
+## Pre-Class Checklist
 
-### For Local Development (Same WiFi)
+- [ ] IP address configured in `.env`
+- [ ] Firewall configured (Windows)
+- [ ] Server running (`npm run dev`)
+- [ ] Phone can access system
+- [ ] QR scanning tested
+- [ ] Location detection working
 
-✅ **Works:** Students on same WiFi network
-❌ **Doesn't Work:** Students on mobile data or different WiFi
+## Optional: VPN Detection (2 min)
 
-### For Production (Internet Access)
-
-Deploy to a hosting service (Vercel, Railway, etc.) to allow access from anywhere.
-
----
-
-## Network Configuration
-
-### Your Current Setup
-
-- **Server Port:** 9002
-- **Server IP:** Find with `ipconfig` or `ifconfig`
-- **Access URL:** `http://YOUR_IP:9002`
-- **QR Code URL:** Same as access URL
-
-### Requirements
-
-- Computer and phones on **same WiFi network**
-- Port 9002 accessible (firewall configured)
-- Server running (`npm run dev`)
-
----
-
-## Testing Checklist
-
-Before your first class:
-
-- [ ] Found your computer's IP address
-- [ ] Updated `.env` with `NEXT_PUBLIC_BASE_URL`
-- [ ] Configured firewall (Windows)
-- [ ] Restarted server
-- [ ] Tested access from your phone
-- [ ] Created test session
-- [ ] Scanned QR code with phone
-- [ ] Verified location detection works
-- [ ] Marked test attendance successfully
-
----
-
-## Quick Commands Reference
-
-```bash
-# Find IP address
-ipconfig                    # Windows
-ifconfig                    # Mac/Linux
-
-# Start server
-npm run dev
-
-# Check if server is accessible
-# On your phone browser, go to:
-http://YOUR_IP:9002
-```
-
----
-
-## VPN Detection Setup (Optional - 2 Minutes)
-
-### Enable VPN/Proxy Blocking
-
-1. **Get free API key:**
-   - Visit: https://www.ipqualityscore.com/create-account
-   - Sign up (free: 5,000 requests/month)
-
+1. **Get API key:** https://www.ipqualityscore.com/create-account
 2. **Add to `.env`:**
    ```env
    IPQUALITYSCORE_API_KEY="your_api_key_here"
    ```
+3. **Restart server**
 
-3. **Restart server:**
-   ```bash
-   npm run dev
-   ```
+*Works without API key but with lower accuracy*
 
-**Note:** System works without API key but with lower VPN detection accuracy.
+## Documentation
 
----
-
-## Full Documentation
-
-For detailed information, see:
-- **Mobile Access:** `docs/MOBILE-ACCESS.md`
-- **VPN Detection:** `docs/VPN-DETECTION.md`
-- **Setup Guide:** `docs/SETUP-INSTRUCTIONS.md`
+- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Detailed network setup
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - Security configuration  
+- **[Setup Guide](./docs/SETUP-INSTRUCTIONS.md)** - Complete installation
 
 ---
 
-## Troubleshooting
-
-**Can't access from phone:**
-- ✓ Same WiFi network?
-- ✓ Correct IP in `.env`?
-- ✓ Firewall allows port 9002?
-- ✓ Server running?
-
-**QR code doesn't scan:**
-- Improve lighting
-- Use manual session code
-
-**Location not working:**
-- Check browser permissions
-- Enable location services
-
-**VPN detected error:**
-- Disable VPN on phone
-- Use WiFi (not mobile data)
-
----
-
-**Status:** ✅ Ready for production
-**Setup Time:** 5-7 minutes
-**Difficulty:** Easy
+**✅ Ready for production • 5-minute setup • Easy difficulty**

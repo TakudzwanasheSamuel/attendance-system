@@ -9,11 +9,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { CourseTableActions } from "./course-table-actions";
-import { Course } from "@prisma/client";
+import { course } from "@prisma/client";
 import type { Lecturer, Student } from "@/lib/types";
 
 interface CourseTableProps {
-  courses: (Course & {
+  courses: (course & {
     user: { name: string };
     courseenrollment: { user: { name: string } }[];
   })[];
