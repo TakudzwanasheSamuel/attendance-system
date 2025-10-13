@@ -19,7 +19,7 @@
 
 **Geofencing**
 - GPS-based location verification
-- Configurable radius (50m-500m)
+- Fixed 50-meter radius for precise attendance
 - Haversine formula for distance calculation
 - Flags out-of-range attempts for review
 
@@ -55,6 +55,8 @@
 **Session Management**
 - Time-limited session codes
 - QR code generation
+- Configurable start delay (0-60 minutes)
+- Configurable duration (1-180 minutes)
 - Automatic expiration
 - Manual session control
 
@@ -67,7 +69,8 @@
 - **Statistics** - Attendance percentage per course
 
 ### 👨‍🏫 Lecturer Portal
-- **Create Sessions** - Generate QR codes and session codes
+- **Create Sessions** - Generate QR codes with flexible timing
+- **Configure Timing** - Set start delay and session duration
 - **Monitor Live** - Real-time attendance tracking
 - **Manage Courses** - View assigned courses
 - **Generate Reports** - AI-powered attendance analytics
@@ -224,4 +227,10 @@
 
 **Total Features:** 50+ implemented features
 **Status:** Production-ready
-**Last Updated:** October 12, 2025
+**Last Updated:** October 13, 2025
+
+### Recent Updates (Oct 13, 2025)
+- ✅ Reduced geofencing radius to 50 meters for precision
+- ✅ Added configurable session start delay (0-60 minutes)
+- ✅ Added configurable session duration (1-180 minutes)
+- ✅ Enhanced lecturer session creation dialog

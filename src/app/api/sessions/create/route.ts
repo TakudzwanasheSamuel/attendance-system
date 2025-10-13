@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { courseId, duration = 15 } = await request.json();
+    const { courseId, duration = 15, startDelay = 0 } = await request.json();
 
     console.log('🔍 Creating session for course:', courseId, 'by lecturer:', userPayload.id);
 
@@ -65,8 +65,12 @@ export async function POST(request: NextRequest) {
     // Generate a unique session code
     const sessionCode = generateSessionCode();
     
-    // Calculate expiration time
-    const expiresAt = new Date();
+    // Calculate start time and expiration time
+    const now = new Date();
+    const startsAt = new Date(now);
+    startsAt.setMinutes(startsAt.getMinutes() + startDelay);
+    
+    const expiresAt = new Date(startsAt);
     expiresAt.setMinutes(expiresAt.getMinutes() + duration);
 
     // Create the session
@@ -75,6 +79,7 @@ export async function POST(request: NextRequest) {
         id: generateId(), // Add the missing id field
         courseId: courseId,
         code: sessionCode,
+        startsAt: startDelay > 0 ? startsAt : null,
         expiresAt: expiresAt
       }
     });

@@ -51,10 +51,11 @@ model attendancesession {
   courseId         String
   code             String             @unique(map: "AttendanceSession_code_key")
   createdAt        DateTime           @default(now())
+  startsAt         DateTime?
   expiresAt        DateTime
   latitude         Float?
   longitude        Float?
-  radiusMeters     Int?               @default(100)
+  radiusMeters     Int?               @default(50)
   requireLocation  Boolean            @default(false)
   attendancerecord attendancerecord[]
   course           course             @relation(fields: [courseId], references: [id], map: "AttendanceSession_courseId_fkey")

@@ -21,7 +21,8 @@ A modern, full-stack attendance tracking system built with Next.js and TypeScrip
 
 - **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
 - **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
-- **📍 Geofencing** - GPS-based location verification for physical presence
+- **📍 Geofencing** - GPS-based location verification within 50 meters
+- **⏱️ Flexible Session Timing** - Lecturers set start delays (0-60 min) and duration (1-180 min)
 - **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
 - **⚡ Real-time Updates** - Live attendance tracking during sessions
 - **👥 Role-Based Access** - Separate dashboards for Students, Lecturers, and Admins
@@ -99,8 +100,6 @@ npm run seed
 
 ### Technical Reference
 - **[Database Structure](./docs/database-structure.md)** - Schema and relationships
-- **[Backend Structure](./docs/backend-structure.md)** - Architecture overview
-- **[Geofencing](./IMPLEMENTATION-SUMMARY.md)** - Location verification details
 - **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
 
 ## ✨ Additional Features
@@ -111,6 +110,8 @@ npm run seed
 - **📊 Analytics Dashboard** - Comprehensive attendance statistics
 - **🔐 Secure Authentication** - JWT-based with bcrypt password hashing
 - **🎨 Modern UI** - Clean, intuitive interface with ShadCN components
+- **⏰ Session Scheduling** - Configure when students can start recording attendance
+- **📏 Precise Geofencing** - 50-meter radius for accurate location verification
 
 ## 📝 License
 

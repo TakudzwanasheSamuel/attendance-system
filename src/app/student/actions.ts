@@ -61,6 +61,18 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
       };
     }
 
+    // Check if session has started (if startDelay was set)
+    const now = new Date();
+    if (session.startsAt && session.startsAt > now) {
+      const minutesUntilStart = Math.ceil((session.startsAt.getTime() - now.getTime()) / 60000);
+      return {
+        isValidSession: true,
+        isEnrolled: false,
+        validationMessage: `This session hasn't started yet. Please wait ${minutesUntilStart} minute${minutesUntilStart !== 1 ? 's' : ''} before recording attendance.`,
+        sessionNotStarted: true,
+      };
+    }
+
     // Check if student is enrolled in the course
     const enrollment = await prisma.courseenrollment.findUnique({
       where: {
@@ -117,7 +129,7 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
         {
           centerLatitude: session.latitude,
           centerLongitude: session.longitude,
-          radiusMeters: session.radiusMeters || 100,
+          radiusMeters: session.radiusMeters || 50,
         }
       );
 
