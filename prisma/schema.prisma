@@ -32,8 +32,17 @@ model attendancerecord {
   studentId         String
   timestamp         DateTime          @default(now())
   status            String            @default("Present")
+  createdAt         DateTime          @default(now())
+  // Geofencing fields
+  latitude          Float?
+  longitude         Float?
+  accuracy          Float?
+  geofenceId        String?
+  isLocationValid   Boolean           @default(false)
+  locationTimestamp DateTime?
   attendancesession attendancesession @relation(fields: [sessionId], references: [id], map: "AttendanceRecord_sessionId_fkey")
   user              user              @relation(fields: [studentId], references: [id], map: "AttendanceRecord_studentId_fkey")
+  geofence          geofence?         @relation(fields: [geofenceId], references: [id])
 
   @@unique([sessionId, studentId], map: "AttendanceRecord_sessionId_studentId_key")
   @@index([studentId], map: "AttendanceRecord_studentId_fkey")
@@ -46,8 +55,13 @@ model attendancesession {
   code             String             @unique(map: "AttendanceSession_code_key")
   createdAt        DateTime           @default(now())
   expiresAt        DateTime
+  updatedAt        DateTime           @updatedAt
+  // Geofencing fields
+  geofenceId       String?
+  requireLocation  Boolean            @default(false)
   attendancerecord attendancerecord[]
   course           course             @relation(fields: [courseId], references: [id], map: "AttendanceSession_courseId_fkey")
+  geofence         geofence?          @relation(fields: [geofenceId], references: [id])
 
   @@index([courseId], map: "AttendanceSession_courseId_fkey")
   @@map("attendance_sessions")
@@ -58,6 +72,11 @@ model course {
   name              String
   code              String              @unique(map: "Course_code_key")
   lecturerId        String
+  latitude          Float?
+  longitude         Float?
+  locationName      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   attendancesession attendancesession[]
   user              user                @relation(fields: [lecturerId], references: [id], map: "Course_lecturerId_fkey")
   courseenrollment  courseenrollment[]
@@ -94,6 +113,13 @@ model user {
   email            String             @unique(map: "User_email_key")
   password         String
   role             user_role          @default(STUDENT)
+  // Parent/Guardian information for students
+  parentName       String?
+  parentEmail      String?
+  parentPhone      String?
+  relationship     String?            // 'Father', 'Mother', 'Guardian', etc.
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   account          account[]
   attendancerecord attendancerecord[]
   course           course[]
@@ -108,6 +134,22 @@ model verificationtoken {
   expires    DateTime
 
   @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+}
+
+model geofence {
+  id                String             @id
+  name              String
+  description       String?
+  latitude          Float
+  longitude         Float
+  radius            Float              // in meters
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  attendancerecord  attendancerecord[]
+  attendancesession attendancesession[]
+
+  @@map("geofences")
 }
 
 enum user_role {

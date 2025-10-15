@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
+import { calculateDistance } from '@/lib/geolocation';
 
 // Generate a unique ID
 function generateId(): string {
@@ -9,7 +10,7 @@ function generateId(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, email, password } = await request.json();
+    const { sessionId, email, password, location } = await request.json();
 
     console.log('🔍 Marking attendance for:', { sessionId, email });
 
@@ -25,7 +26,8 @@ export async function POST(request: NextRequest) {
     const session = await prisma.attendancesession.findUnique({
       where: { id: sessionId },
       include: {
-        course: true
+        course: true,
+        geofence: true
       }
     });
 
@@ -99,13 +101,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Location validation (if geofence or course has location set)
+    let locationValidated = false;
+    let distanceFromLocation = null;
+    
+    // Check if session has geofence or course has location
+    const hasGeofence = session.geofence && session.geofence.isActive;
+    const hasCourseLocation = session.course.latitude && session.course.longitude;
+    
+    if (hasGeofence || hasCourseLocation) {
+      if (!location) {
+        return NextResponse.json(
+          { success: false, error: 'Location is required for this course' },
+          { status: 400 }
+        );
+      }
+
+      // Use geofence location if available, otherwise use course location
+      const targetLatitude = hasGeofence ? session.geofence.latitude : session.course.latitude;
+      const targetLongitude = hasGeofence ? session.geofence.longitude : session.course.longitude;
+      const maxDistance = hasGeofence ? session.geofence.radius : 50; // Default 50m for course location
+
+      distanceFromLocation = calculateDistance(
+        location.latitude,
+        location.longitude,
+        targetLatitude,
+        targetLongitude
+      );
+
+      // Check if within the allowed distance
+      if (distanceFromLocation > maxDistance) {
+        const locationType = hasGeofence ? 'geofence' : 'course location';
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `You are ${Math.round(distanceFromLocation)}m away from the ${locationType}. You must be within ${maxDistance}m to mark attendance.` 
+          },
+          { status: 400 }
+        );
+      }
+
+      locationValidated = true;
+    }
+
     // Create attendance record
     const attendanceRecord = await prisma.attendancerecord.create({
       data: {
         id: generateId(),
         sessionId: sessionId,
         studentId: student.id,
-        status: 'Present'
+        status: 'Present',
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        accuracy: location?.accuracy || null,
+        geofenceId: session.geofenceId || null,
+        isLocationValid: locationValidated,
+        locationTimestamp: location ? new Date() : null
       }
     });
 

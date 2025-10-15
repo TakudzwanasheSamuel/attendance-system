@@ -9,6 +9,7 @@ import { ArrowLeft, Copy, QrCode, Users, Clock, CheckCircle } from "lucide-react
 import Link from "next/link";
 import { QRCodeGenerator } from "@/components/lecturer/qr-code-generator";
 import { CopyButton } from "@/components/lecturer/copy-button";
+import { OpenStudentPageButton } from "@/components/lecturer/open-student-page-button";
 
 interface SessionPageProps {
   params: Promise<{ courseId: string; sessionId: string }>;
@@ -92,19 +93,22 @@ export default async function SessionPage({ params }: SessionPageProps) {
           <h2 className="text-2xl font-bold tracking-tight font-headline">Attendance Session</h2>
           <p className="text-muted-foreground">{session.course.name} - {session.course.code}</p>
         </div>
-        <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-2">
-          {isActive ? (
-            <>
-              <CheckCircle className="h-4 w-4" />
-              Active
-            </>
-          ) : (
-            <>
-              <Clock className="h-4 w-4" />
-              Expired
-            </>
-          )}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <OpenStudentPageButton sessionId={sessionId} />
+          <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-2">
+            {isActive ? (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                Active
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4" />
+                Expired
+              </>
+            )}
+          </Badge>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

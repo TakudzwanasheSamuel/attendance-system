@@ -25,106 +25,106 @@ Password: password123
 
 👨‍🏫 LECTURER ACCOUNTS
 ------------------------------
-1. Email: kudzai.moyo@msu.com
-   Name: Kudzai Moyo
+1. Email: blessing.mlambo.9@msu.com
+   Name: Blessing Mlambo
    Password: password123
 
-2. Email: kudzai.mpofu.5@msu.com
-   Name: Kudzai Mpofu
+2. Email: nyasha.moyo.6@msu.com
+   Name: Nyasha Moyo
    Password: password123
 
-3. Email: rumbidzai.mutevedzi.9@msu.com
-   Name: Rumbidzai Mutevedzi
+3. Email: ruvimbo.chigwada@msu.com
+   Name: Ruvimbo Chigwada
    Password: password123
 
-4. Email: tafadzwa.mukamuri.1@msu.com
+4. Email: ruvimbo.mukamuri.1@msu.com
+   Name: Ruvimbo Mukamuri
+   Password: password123
+
+5. Email: tafadzwa.mlambo.13@msu.com
+   Name: Tafadzwa Mlambo
+   Password: password123
+
+6. Email: tafadzwa.mpofu.3@msu.com
+   Name: Tafadzwa Mpofu
+   Password: password123
+
+7. Email: tafadzwa.mukamuri.10@msu.com
    Name: Tafadzwa Mukamuri
    Password: password123
 
-5. Email: tafara.chigwada.10@msu.com
-   Name: Tafara Chigwada
+8. Email: tafara.chirwa.4@msu.com
+   Name: Tafara Chirwa
    Password: password123
 
-6. Email: tapiwa.mazvihwa.11@msu.com
-   Name: Tapiwa Mazvihwa
-   Password: password123
-
-7. Email: tapiwa.mugabe.3@msu.com
+9. Email: tapiwa.mugabe.11@msu.com
    Name: Tapiwa Mugabe
    Password: password123
 
-8. Email: tawanda.chirwa.7@msu.com
-   Name: Tawanda Chirwa
+10. Email: tariro.chirwa.5@msu.com
+   Name: Tariro Chirwa
    Password: password123
 
-9. Email: tawanda.mazvihwa.2@msu.com
-   Name: Tawanda Mazvihwa
-   Password: password123
-
-10. Email: tawanda.mutevedzi.6@msu.com
-   Name: Tawanda Mutevedzi
-   Password: password123
-
-11. Email: tendai.chigwada.13@msu.com
+11. Email: tendai.chigwada.14@msu.com
    Name: Tendai Chigwada
    Password: password123
 
-12. Email: tendai.mlambo.12@msu.com
-   Name: Tendai Mlambo
+12. Email: tendai.mpofu.7@msu.com
+   Name: Tendai Mpofu
    Password: password123
 
-13. Email: tendai.mugabe.4@msu.com
-   Name: Tendai Mugabe
+13. Email: tendai.mutevedzi.12@msu.com
+   Name: Tendai Mutevedzi
    Password: password123
 
-14. Email: tendai.nkomo.8@msu.com
-   Name: Tendai Nkomo
+14. Email: tendai.ncube.8@msu.com
+   Name: Tendai Ncube
    Password: password123
 
-15. Email: tendekai.mutevedzi.14@msu.com
-   Name: Tendekai Mutevedzi
+15. Email: tendekai.nkomo.2@msu.com
+   Name: Tendekai Nkomo
    Password: password123
 
 👨‍🎓 STUDENT ACCOUNTS (First 10)
 ------------------------------
-1. Email: blessing.mlambo.37@msu.com
-   Name: Blessing Mlambo
+1. Email: blessing.dube.92@msu.com
+   Name: Blessing Dube
    Password: password123
 
-2. Email: kudzai.mpofu.77@msu.com
-   Name: Kudzai Mpofu
+2. Email: kudzai.chirwa.95@msu.com
+   Name: Kudzai Chirwa
    Password: password123
 
-3. Email: kudzai.mugabe.68@msu.com
-   Name: Kudzai Mugabe
-   Password: password123
-
-4. Email: kudzai.mugabe.28@msu.com
-   Name: Kudzai Mugabe
-   Password: password123
-
-5. Email: kudzai.mugabe.111@msu.com
-   Name: Kudzai Mugabe
-   Password: password123
-
-6. Email: kudzai.mukamuri.114@msu.com
+3. Email: kudzai.mukamuri.19@msu.com
    Name: Kudzai Mukamuri
    Password: password123
 
-7. Email: nyasha.chigwada.49@msu.com
-   Name: Nyasha Chigwada
+4. Email: kudzai.nkomo.17@msu.com
+   Name: Kudzai Nkomo
    Password: password123
 
-8. Email: nyasha.chirwa.24@msu.com
-   Name: Nyasha Chirwa
+5. Email: kudzai.nkomo.90@msu.com
+   Name: Kudzai Nkomo
    Password: password123
 
-9. Email: nyasha.dube.15@msu.com
-   Name: Nyasha Dube
+6. Email: kudzai.nkomo.40@msu.com
+   Name: Kudzai Nkomo
    Password: password123
 
-10. Email: nyasha.dube.101@msu.com
-   Name: Nyasha Dube
+7. Email: nyasha.mugabe.93@msu.com
+   Name: Nyasha Mugabe
+   Password: password123
+
+8. Email: nyasha.mutevedzi.49@msu.com
+   Name: Nyasha Mutevedzi
+   Password: password123
+
+9. Email: rumbidzai.mazvihwa.35@msu.com
+   Name: Rumbidzai Mazvihwa
+   Password: password123
+
+10. Email: rumbidzai.mlambo.108@msu.com
+   Name: Rumbidzai Mlambo
    Password: password123
 
 ... and 90 more students
