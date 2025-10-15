@@ -1,5 +1,6 @@
 import { AppSidebar, type NavItem } from "@/components/shared/app-sidebar";
 import { UserNav } from "@/components/shared/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
@@ -52,7 +53,10 @@ export default async function StudentLayout({
             <SidebarTrigger className="md:hidden"/>
             <h1 className="text-lg font-semibold font-headline">Student Portal</h1>
           </div>
-          <UserNav name={studentName} email={studentEmail} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav name={studentName} email={studentEmail} />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
             {children}

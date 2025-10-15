@@ -1,5 +1,6 @@
 import { AppSidebar, type NavItem } from "@/components/shared/app-sidebar";
 import { UserNav } from "@/components/shared/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { admins } from "@/lib/mock-data";
 import { LayoutDashboard, Users, BookMarked, BarChart3, MapPin, Mail } from "lucide-react";
@@ -30,7 +31,10 @@ export default function AdminLayout({
             <SidebarTrigger className="md:hidden"/>
             <h1 className="text-lg font-semibold font-headline">Admin Portal</h1>
           </div>
-          <UserNav name={admin.name} email={admin.email} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav name={admin.name} email={admin.email} />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
             {children}

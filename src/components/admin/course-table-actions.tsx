@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import { deleteCourse } from "@/lib/database-actions";
 import { useRouter } from "next/navigation";
 import type { Course, Lecturer, Student } from "@/lib/types";
 import { EditCourseDialog } from "./edit-course-dialog";
+import { ReassignLecturerDialog } from "./reassign-lecturer-dialog";
 
 interface CourseTableActionsProps {
   course: Course;
@@ -35,6 +36,7 @@ interface CourseTableActionsProps {
 
 export function CourseTableActions({ course, lecturers, students }: CourseTableActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -61,6 +63,12 @@ export function CourseTableActions({ course, lecturers, students }: CourseTableA
         course={course}
         lecturers={lecturers}
         students={students}
+      />
+      <ReassignLecturerDialog
+        open={isReassignDialogOpen}
+        onOpenChange={setIsReassignDialogOpen}
+        course={course}
+        lecturers={lecturers}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -91,6 +99,10 @@ export function CourseTableActions({ course, lecturers, students }: CourseTableA
           <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit Course
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsReassignDialogOpen(true)}>
+            <UserCog className="mr-2 h-4 w-4" />
+            Reassign Lecturer
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive">

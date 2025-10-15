@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from './prisma';
-import { Role } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { hashPassword } from './auth';
 
 // Simple unique id generator similar to the one used in session creation
@@ -15,7 +15,7 @@ export async function createUser(data: {
   name: string;
   email: string;
   password: string;
-  role: Role;
+  role: user_role;
 }) {
   const hashedPassword = await hashPassword(data.password);
   
@@ -32,7 +32,7 @@ export async function updateUser(id: string, data: {
   name?: string;
   email?: string;
   password?: string;
-  role?: Role;
+  role?: user_role;
 }) {
   const updateData: any = { ...data };
   
@@ -47,6 +47,53 @@ export async function updateUser(id: string, data: {
 }
 
 export async function deleteUser(id: string) {
+  // Delete related records first to avoid foreign key constraint errors
+  
+  // Delete attendance records
+  await prisma.attendancerecord.deleteMany({
+    where: { studentId: id }
+  });
+  
+  // Delete course enrollments
+  await prisma.courseenrollment.deleteMany({
+    where: { studentId: id }
+  });
+  
+  // Delete attendance sessions (if user is a lecturer)
+  const courses = await prisma.course.findMany({
+    where: { lecturerId: id },
+    select: { id: true }
+  });
+  
+  if (courses.length > 0) {
+    const courseIds = courses.map(c => c.id);
+    
+    // Delete attendance records for these courses
+    await prisma.attendancerecord.deleteMany({
+      where: {
+        attendancesession: {
+          courseId: { in: courseIds }
+        }
+      }
+    });
+    
+    // Delete attendance sessions for these courses
+    await prisma.attendancesession.deleteMany({
+      where: { courseId: { in: courseIds } }
+    });
+    
+    // Delete course enrollments for these courses
+    await prisma.courseenrollment.deleteMany({
+      where: { courseId: { in: courseIds } }
+    });
+    
+    // Delete courses
+    await prisma.course.deleteMany({
+      where: { id: { in: courseIds } }
+    });
+  }
+  
+  // Finally delete the user
   return prisma.user.delete({
     where: { id }
   });
@@ -67,6 +114,7 @@ export async function createCourse(data: {
 }) {
   const course = await prisma.course.create({
     data: {
+      id: generateId(),
       name: data.name,
       code: data.code,
       lecturerId: data.lecturerId
@@ -75,7 +123,7 @@ export async function createCourse(data: {
 
   // Create enrollments if students are provided
   if (data.enrolledStudentIds && data.enrolledStudentIds.length > 0) {
-    await prisma.courseEnrollment.createMany({
+    await prisma.courseenrollment.createMany({
       data: data.enrolledStudentIds.map(studentId => ({
         studentId,
         courseId: course.id
@@ -103,13 +151,13 @@ export async function updateCourse(id: string, data: {
   // Update enrollments if provided
   if (data.enrolledStudentIds !== undefined) {
     // Remove existing enrollments
-    await prisma.courseEnrollment.deleteMany({
+    await prisma.courseenrollment.deleteMany({
       where: { courseId: id }
     });
 
     // Create new enrollments
     if (data.enrolledStudentIds.length > 0) {
-      await prisma.courseEnrollment.createMany({
+      await prisma.courseenrollment.createMany({
         data: data.enrolledStudentIds.map(studentId => ({
           studentId,
           courseId: id
@@ -119,6 +167,13 @@ export async function updateCourse(id: string, data: {
   }
 
   return course;
+}
+
+export async function reassignCourseLecturer(courseId: string, newLecturerId: string) {
+  return prisma.course.update({
+    where: { id: courseId },
+    data: { lecturerId: newLecturerId }
+  });
 }
 
 export async function deleteCourse(id: string) {
@@ -147,8 +202,11 @@ export async function createAttendanceSession(data: {
   code: string;
   expiresAt: Date;
 }) {
-  return prisma.attendanceSession.create({
-    data
+  return prisma.attendancesession.create({
+    data: {
+      id: generateId(),
+      ...data
+    }
   });
 }
 
@@ -161,13 +219,13 @@ export async function getActiveSessions(courseId?: string) {
     whereClause.courseId = courseId;
   }
 
-  return prisma.attendanceSession.findMany({
+  return prisma.attendancesession.findMany({
     where: whereClause,
     include: {
       course: true,
-      records: {
+      attendancerecord: {
         include: {
-          student: true
+          user: true
         }
       }
     },
@@ -181,7 +239,7 @@ export async function markAttendance(data: {
   studentId: string;
   status?: string;
 }) {
-  return prisma.attendanceRecord.upsert({
+  return prisma.attendancerecord.upsert({
     where: {
       sessionId_studentId: {
         sessionId: data.sessionId,
@@ -193,6 +251,7 @@ export async function markAttendance(data: {
       timestamp: new Date()
     },
     create: {
+      id: generateId(),
       sessionId: data.sessionId,
       studentId: data.studentId,
       status: data.status || 'Present'
@@ -201,15 +260,15 @@ export async function markAttendance(data: {
 }
 
 export async function getStudentAttendanceHistory(studentId: string) {
-  return prisma.attendanceRecord.findMany({
+  return prisma.attendancerecord.findMany({
     where: { studentId },
     include: {
-      session: {
+      attendancesession: {
         include: {
           course: true
         }
       },
-      student: true
+      user: true
     },
     orderBy: { timestamp: 'desc' }
   });
@@ -219,14 +278,17 @@ export async function getCourseAttendanceReport(courseId: string) {
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
-      enrollments: {
+      courseenrollment: {
         include: {
-          student: true
+          user: true
         }
       },
-      sessions: {
+      attendancesession: {
         where: {
           expiresAt: { lt: new Date() }
+        },
+        include: {
+          attendancerecord: true
         }
       }
     }
@@ -234,12 +296,12 @@ export async function getCourseAttendanceReport(courseId: string) {
 
   if (!course) return [];
 
-  const students = course.enrollments.map(e => e.student);
-  const sessions = course.sessions;
+  const students = course.courseenrollment.map((e: any) => e.user);
+  const sessions = course.attendancesession;
 
-  return students.map(student => {
-    const attendedCount = sessions.filter(session => 
-      session.records?.some(record => record.studentId === student.id)
+  return students.map((student: any) => {
+    const attendedCount = sessions.filter((session: any) => 
+      session.attendancerecord?.some((record: any) => record.studentId === student.id)
     ).length;
     
     const totalSessions = sessions.length;

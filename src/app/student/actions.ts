@@ -4,14 +4,29 @@ import { validateAttendanceSession, ValidateAttendanceSessionInput } from "@/ai/
 import { prisma } from "@/lib/prisma";
 import { markAttendance as markAttendanceDB } from "@/lib/database-actions";
 import { markAttendanceWithLocation } from "@/lib/geofence-actions";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { type Location } from "@/lib/geofencing";
+import { isWithinGeoFence } from "@/lib/geo-utils";
+import { detectVPN, shouldBlockAttendance } from "@/lib/vpn-detection";
 
-export async function markAttendance(sessionCode: string, location?: Location) {
+interface MarkAttendanceInput {
+  sessionCode: string;
+  latitude?: number;
+  longitude?: number;
+  userAgent?: string;
+}
+
+export async function markAttendance(input: string | MarkAttendanceInput, location?: Location) {
+  // Support both old (string) and new (object) input formats
+  const sessionCode = typeof input === 'string' ? input : input.sessionCode;
+  const latitude = typeof input === 'object' ? input.latitude : undefined;
+  const longitude = typeof input === 'object' ? input.longitude : undefined;
+  const userAgent = typeof input === 'object' ? input.userAgent : undefined;
   try {
     // Get current user from token
-    const token = cookies().get('auth-token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
     if (!token) {
       return {
         isValidSession: false,
@@ -85,18 +100,102 @@ export async function markAttendance(sessionCode: string, location?: Location) {
       };
     }
 
+    // Geo-fence verification and VPN detection
+    let isVerified = true;
+    let verificationNotes: string[] = [];
+    let distance: number | undefined;
+
+    // VPN Detection
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+    const userAgentString = userAgent || headersList.get('user-agent') || 'unknown';
+    
+    const vpnCheck = await detectVPN(ipAddress);
+    if (vpnCheck.isVPN && shouldBlockAttendance(vpnCheck)) {
+      return {
+        isValidSession: true,
+        isEnrolled: true,
+        validationMessage: "Attendance blocked: VPN detected. Please disable VPN and try again.",
+        isBlocked: true,
+      };
+    }
+
+    // Location verification
+    if (session.requireLocation && (session.latitude || session.geofenceId)) {
+      const currentLat = latitude || location?.latitude;
+      const currentLng = longitude || location?.longitude;
+      
+      if (!currentLat || !currentLng) {
+        return {
+          isValidSession: true,
+          isEnrolled: true,
+          validationMessage: "Location is required for this session. Please enable location services and try again.",
+          requiresLocation: true,
+        };
+      }
+
+      // Use geofence if available, otherwise use session coordinates
+      if (session.geofenceId && session.geofence) {
+        const geoCheck = isWithinGeoFence(
+          { latitude: currentLat, longitude: currentLng },
+          {
+            centerLatitude: session.geofence.latitude,
+            centerLongitude: session.geofence.longitude,
+            radiusMeters: session.geofence.radiusMeters || 100,
+          }
+        );
+
+        distance = geoCheck.distance;
+
+        if (!geoCheck.isWithin) {
+          isVerified = false;
+          verificationNotes.push(
+            `Location verification failed: ${Math.round(geoCheck.distance)}m from venue (max: ${session.geofence.radiusMeters}m)`
+          );
+        }
+      } else if (session.latitude && session.longitude) {
+        const geoCheck = isWithinGeoFence(
+          { latitude: currentLat, longitude: currentLng },
+          {
+            centerLatitude: session.latitude,
+            centerLongitude: session.longitude,
+            radiusMeters: session.radiusMeters || 100,
+          }
+        );
+
+        distance = geoCheck.distance;
+
+        if (!geoCheck.isWithin) {
+          isVerified = false;
+          verificationNotes.push(
+            `Location verification failed: ${Math.round(geoCheck.distance)}m from venue (max: ${session.radiusMeters}m)`
+          );
+        }
+      }
+    }
+
+    // Add VPN check notes to verification if VPN detected but not blocking
+    if (vpnCheck.isVPN) {
+      verificationNotes.push(
+        `VPN/Proxy suspected (${vpnCheck.confidence} confidence): ${vpnCheck.reasons.join(', ')}`
+      );
+    }
+
     // Use location-aware attendance marking if location is provided
-    if (location) {
+    if (location || (latitude && longitude)) {
       const result = await markAttendanceWithLocation({
         sessionId: session.id,
         userId: user.id,
         status: 'Present',
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
+        latitude: currentLat,
+        longitude: currentLng,
+        accuracy: location?.accuracy,
         geofenceId: session.geofenceId || undefined,
-        isLocationValid: session.geofence ? 
-          (location.latitude && location.longitude ? true : false) : true
+        isLocationValid: isVerified,
+        ipAddress,
+        userAgent: userAgentString,
+        isVerified,
+        verificationNotes: verificationNotes.length > 0 ? verificationNotes.join('; ') : null,
       });
 
       if (!result.success) {
@@ -119,6 +218,9 @@ export async function markAttendance(sessionCode: string, location?: Location) {
       isValidSession: true,
       isEnrolled: true,
       validationMessage: `Attendance successfully marked for ${session.course.name}.`,
+      warnings: verificationNotes.length > 0 ? verificationNotes : undefined,
+      distance: distance ? Math.round(distance) : undefined,
+      requiresVerification: !isVerified,
     };
   } catch (error) {
     console.error("Error in markAttendance action:", error);

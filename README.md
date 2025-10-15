@@ -1,14 +1,14 @@
 # Smart Student Monitoring System
 
-This is a full-stack Next.js application designed to streamline and modernize classroom attendance tracking. It provides dedicated portals for Students, Lecturers, and Administrators, each with features tailored to their roles. The system leverages AI to provide insightful reports and simplify complex validation tasks.
+A modern, full-stack attendance tracking system built with Next.js and TypeScript. Features mobile QR code scanning, geofencing, VPN detection, AI-powered analytics, and automated parent notifications for educational institutions.
 
 ## Core Features
 
 ### 1. Role-Based Access Control
 The system has three distinct user roles, ensuring users only see what's relevant to them:
-- **Student**: Can mark attendance and view their own history.
-- **Lecturer**: Manages courses, creates attendance sessions, and views reports for their students.
-- **Administrator**: Has a system-wide view with full control over users, courses, and reporting.
+- **👨‍🎓 Student**: Mark attendance via QR codes, view attendance history
+- **👨‍🏫 Lecturer**: Create sessions, manage courses, generate reports
+- **👨‍💼 Administrator**: Full system control, user/course management, analytics
 
 ### 2. AI-Powered Reporting & Validation
 - **Comprehensive Reports**: Both Lecturers and Administrators can generate detailed attendance reports using AI. The system analyzes filtered data to produce summaries, identify trends, and offer actionable insights.
@@ -50,9 +50,20 @@ The system has three distinct user roles, ensuring users only see what's relevan
 - **Scheduling**: [node-cron](https://www.npmjs.com/package/node-cron) for automated tasks
 - **Geolocation**: HTML5 Geolocation API with Haversine formula for distance calculation
 
+## 🚀 Key Features
+
+- **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
+- **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
+- **📍 Geofencing** - GPS-based location verification for physical presence
+- **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
+- **⚡ Real-time Updates** - Live attendance tracking during sessions
+- **👥 Role-Based Access** - Separate dashboards for Students, Lecturers, and Admins
+
+**Quick Setup:** See [QUICK-START.md](./QUICK-START.md) for mobile access and VPN detection setup.
+
 ## Getting Started
 
-📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./SETUP-INSTRUCTIONS.md)**
+📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./docs/SETUP-INSTRUCTIONS.md)**
 
 ### Quick Start
 
@@ -91,9 +102,10 @@ The system has three distinct user roles, ensuring users only see what's relevan
 After seeding the database, you can log in with these accounts:
 
 - **Admin**: `admin@msu.com` / `password123`
-- **Lecturer**: `kudzai.moyo@msu.com` / `password123` (or any lecturer from seeded data)
-- **Student**: `tendekai.moyo.82@msu.com` / `password123` (or any student from seeded data)
+- **Student**: `tinashe.mazvihwa.40@msu.com` / `password123` (or any student from database)
+- **Lecturer**: Any lecturer email from database (format: `firstname.lastname.##@msu.com`)
 
+<<<<<<< HEAD
 ## Key Features
 
 ### 🎯 **Smart Attendance Tracking**
@@ -149,3 +161,48 @@ For support, email support@msu.com or create an issue in the GitHub repository.
 **Built with ❤️ for Midlands State University**
 
  
+=======
+**To find more accounts:**
+```bash
+# Check MySQL database
+mysql -u root -p
+USE smart_student_monitoring;
+SELECT email, name, role FROM users LIMIT 10;
+```
+
+All seeded accounts use password: `password123`
+
+**Note:** If login fails, reseed the database:
+```bash
+npm run seed
+```
+
+## 📖 Documentation
+
+### Quick Start
+- **[Quick Start Guide](./QUICK-START.md)** - 5-minute setup for mobile access and VPN detection
+
+### Setup & Configuration
+- **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete installation guide
+- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Detailed mobile configuration
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection setup
+
+### Technical Reference
+- **[Database Structure](./docs/database-structure.md)** - Schema and relationships
+- **[Backend Structure](./docs/backend-structure.md)** - Architecture overview
+- **[Geofencing](./IMPLEMENTATION-SUMMARY.md)** - Location verification details
+- **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
+
+## ✨ Additional Features
+
+- **🌓 Dark/Light Mode** - Theme toggle with system preference support
+- **📱 PWA Support** - Install as app on mobile home screen
+- **🔄 Real-time Sync** - Live updates across all connected devices
+- **📊 Analytics Dashboard** - Comprehensive attendance statistics
+- **🔐 Secure Authentication** - JWT-based with bcrypt password hashing
+- **🎨 Modern UI** - Clean, intuitive interface with ShadCN components
+
+## 📝 License
+
+This project is licensed under the MIT License.
+>>>>>>> f80bbbd0ad13078efe88517bd4970807d87b172a

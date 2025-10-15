@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { BookOpen, Calendar, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { MarkAttendanceForm } from "@/components/student/mark-attendance-form";
 
 export default async function StudentDashboardPage() {
   // Get the current user from the auth token
@@ -144,6 +145,9 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
+      {/* Mark Attendance Section */}
+      <MarkAttendanceForm />
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card key="courses-list">
           <CardHeader>
@@ -156,7 +160,7 @@ export default async function StudentDashboardPage() {
             ) : (
               <div className="space-y-3">
                 {enrolledCourses.map((enrollment) => (
-                  <div key={enrollment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={enrollment.courseId} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">{enrollment.course.name}</p>
                       <p className="text-sm text-muted-foreground">{enrollment.course.code}</p>

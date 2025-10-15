@@ -1,7 +1,7 @@
 "use server";
 
 import { authenticateUser, createUser, generateToken } from './auth';
-import { Role } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 
@@ -61,24 +61,41 @@ export async function loginAction(prevState: any, formData?: FormData) {
   }
 }
 
-export async function signupAction(formData: FormData) {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const role = formData.get('role') as string;
+// Support both direct server action invocation and useActionState signature
+export async function signupAction(prevState: any, formData?: FormData) {
+  console.log('🚀 Signup action called with:', { prevState, formData: !!formData });
+  
+  const fd = formData ?? (prevState instanceof FormData ? prevState : null);
+  
+  if (!fd) {
+    console.log('❌ No form data received');
+    return { error: 'No form data received' };
+  }
+  
+  const name = fd.get('name') as string;
+  const email = fd.get('email') as string;
+  const password = fd.get('password') as string;
+  const role = fd.get('role') as string;
+
+  console.log('📝 Extracted signup data:', { name, email, role, passwordLength: password?.length });
 
   if (!name || !email || !password || !role) {
+    console.log('❌ Missing required fields');
     return { error: 'All fields are required' };
   }
 
   try {
+    console.log('👤 Creating user...');
     const user = await createUser({
       name,
       email,
       password,
-      role: role.toUpperCase() as Role,
+      role: role.toUpperCase() as user_role,
     });
 
+    console.log('✅ User created:', user.id);
+    console.log('🎫 Generating JWT token...');
+    
     // Generate JWT token
     const token = generateToken({
       id: user.id,
@@ -87,6 +104,7 @@ export async function signupAction(formData: FormData) {
       role: user.role,
     });
     
+    console.log('🍪 Setting auth cookie...');
     const cookieStore = await cookies();
     cookieStore.set('auth-token', token, {
       httpOnly: true,
@@ -95,14 +113,17 @@ export async function signupAction(formData: FormData) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
+    console.log('🎯 Determining redirect path for role:', user.role);
     // Redirect based on role
     if (user.role === 'LECTURER') {
+      console.log('✅ Redirecting to lecturer dashboard');
       redirect('/lecturer/dashboard');
     } else {
+      console.log('✅ Redirecting to student dashboard');
       redirect('/student/dashboard');
     }
   } catch (error: any) {
-    console.error('Signup error:', error);
+    console.error('💥 Signup error:', error);
     if (error.code === 'P2002') {
       return { error: 'Email already exists' };
     }
@@ -111,6 +132,7 @@ export async function signupAction(formData: FormData) {
 }
 
 export async function logoutAction() {
-  cookies().delete('auth-token');
+  const cookieStore = await cookies();
+  cookieStore.delete('auth-token');
   redirect('/login');
 }

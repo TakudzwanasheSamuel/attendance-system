@@ -40,6 +40,11 @@ model attendancerecord {
   geofenceId        String?
   isLocationValid   Boolean           @default(false)
   locationTimestamp DateTime?
+  // Additional verification fields
+  ipAddress         String?
+  userAgent         String?           @db.Text
+  isVerified        Boolean           @default(true)
+  verificationNotes String?           @db.Text
   attendancesession attendancesession @relation(fields: [sessionId], references: [id], map: "AttendanceRecord_sessionId_fkey")
   user              user              @relation(fields: [studentId], references: [id], map: "AttendanceRecord_studentId_fkey")
   geofence          geofence?         @relation(fields: [geofenceId], references: [id])
@@ -58,6 +63,9 @@ model attendancesession {
   updatedAt        DateTime           @updatedAt
   // Geofencing fields
   geofenceId       String?
+  latitude         Float?
+  longitude        Float?
+  radiusMeters     Int?               @default(100)
   requireLocation  Boolean            @default(false)
   attendancerecord attendancerecord[]
   course           course             @relation(fields: [courseId], references: [id], map: "AttendanceSession_courseId_fkey")
