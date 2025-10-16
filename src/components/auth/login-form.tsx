@@ -33,8 +33,8 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -91,9 +91,9 @@ export function LoginForm() {
                         disabled={isPending}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
                         <span className="sr-only">
                           {showPassword ? "Hide password" : "Show password"}

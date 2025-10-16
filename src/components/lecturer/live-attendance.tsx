@@ -1,100 +1,104 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Wifi, WifiOff } from "lucide-react";
-import { ExportButton } from "@/components/shared/export-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Users, Clock, CheckCircle } from 'lucide-react';
 
 interface AttendanceRecord {
   id: string;
-  studentName: string;
-  studentEmail: string;
-  timestamp: string;
+  timestamp: Date;
   status: string;
-}
-
-interface LiveAttendanceData {
-  sessionId: string;
-  count: number;
-  records: AttendanceRecord[];
-  lastUpdate: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 interface LiveAttendanceProps {
   sessionId: string;
-  initialData?: LiveAttendanceData;
+  className?: string;
 }
 
-export function LiveAttendance({ sessionId, initialData }: LiveAttendanceProps) {
-  const [data, setData] = useState<LiveAttendanceData | null>(initialData || null);
-  const [isConnected, setIsConnected] = useState(false);
+export function LiveAttendance({ sessionId, className = "" }: LiveAttendanceProps) {
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchAttendanceRecords = async () => {
+    try {
+      const response = await fetch(`/api/attendance/records/${sessionId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance records');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setAttendanceRecords(data.records);
+      } else {
+        setError(data.error || 'Failed to fetch attendance records');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let eventSource: EventSource | null = null;
-
-    const connectSSE = () => {
-      try {
-        eventSource = new EventSource(`/api/sessions/${sessionId}/live`);
-        
-        eventSource.onopen = () => {
-          setIsConnected(true);
-          setError(null);
-          console.log('✅ Live attendance connected');
-        };
-
-        eventSource.onmessage = (event) => {
-          try {
-            const newData: LiveAttendanceData = JSON.parse(event.data);
-            setData(newData);
-          } catch (err) {
-            console.error('Failed to parse SSE data:', err);
-          }
-        };
-
-        eventSource.onerror = (err) => {
-          console.error('SSE Error:', err);
-          setIsConnected(false);
-          setError('Connection lost. Attempting to reconnect...');
-          
-          // Attempt to reconnect after 5 seconds
-          setTimeout(() => {
-            if (eventSource?.readyState === EventSource.CLOSED) {
-              connectSSE();
-            }
-          }, 5000);
-        };
-
-      } catch (err) {
-        console.error('Failed to create EventSource:', err);
-        setError('Failed to establish live connection');
-      }
-    };
-
-    connectSSE();
-
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-        setIsConnected(false);
-      }
-    };
+    fetchAttendanceRecords();
+    
+    // Refresh every 5 seconds to show live updates
+    const interval = setInterval(fetchAttendanceRecords, 5000);
+    
+    return () => clearInterval(interval);
   }, [sessionId]);
 
-  if (!data) {
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return <Badge variant="default" className="bg-green-500">Present</Badge>;
+      case 'late':
+        return <Badge variant="secondary" className="bg-yellow-500">Late</Badge>;
+      case 'absent':
+        return <Badge variant="destructive">Absent</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (isLoading) {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Live Attendance
           </CardTitle>
-          <CardDescription>Loading live attendance data...</CardDescription>
+          <CardDescription>Loading attendance records...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            Connecting to live updates...
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Live Attendance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <p className="text-red-500">{error}</p>
           </div>
         </CardContent>
       </Card>
@@ -102,69 +106,47 @@ export function LiveAttendance({ sessionId, initialData }: LiveAttendanceProps) 
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Live Attendance
-          </div>
-          <div className="flex items-center gap-2">
-            <ExportButton sessionId={sessionId} className="h-8" />
-            {isConnected ? (
-              <Badge variant="outline" className="text-green-600 border-green-600">
-                <Wifi className="h-3 w-3 mr-1" />
-                Live
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-red-600 border-red-600">
-                <WifiOff className="h-3 w-3 mr-1" />
-                Offline
-              </Badge>
-            )}
-            <Badge variant="secondary">
-              {data.count} Present
-            </Badge>
-          </div>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Live Attendance
         </CardTitle>
         <CardDescription>
-          Real-time attendance tracking
-          {data.lastUpdate && (
-            <span className="ml-2 text-xs">
-              Last update: {new Date(data.lastUpdate).toLocaleTimeString()}
-            </span>
-          )}
+          Students who have marked attendance ({attendanceRecords.length} present)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-sm text-yellow-800">{error}</p>
-          </div>
-        )}
-        
-        {data.records.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No attendance records yet. Students will appear here as they mark attendance.
+        {attendanceRecords.length === 0 ? (
+          <div className="text-center py-8">
+            <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No attendance records yet</p>
+            <p className="text-sm text-muted-foreground">Students will appear here as they mark attendance</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {data.records.map((record) => (
-              <div key={record.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="font-medium">{record.studentName}</p>
-                  <p className="text-sm text-muted-foreground">{record.studentEmail}</p>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {attendanceRecords
+              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+              .map((record) => (
+                <div key={record.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{record.user.name}</p>
+                      {getStatusBadge(record.status)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{record.user.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(record.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(record.timestamp).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(record.timestamp).toLocaleTimeString()}
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {record.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </CardContent>

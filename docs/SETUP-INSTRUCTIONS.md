@@ -75,11 +75,17 @@ This flag resolves conflicts between different versions of date-fns used by vari
    # Database Configuration
    DATABASE_URL="mysql://username:password@localhost:3306/attendance_system"
    
-   # Google Gemini AI API Key (Optional)
-   GOOGLE_GENAI_API_KEY="your_gemini_api_key_here"
-   
    # JWT Secret for Authentication
    JWT_SECRET="your_jwt_secret_key_here"
+   
+   # Email Configuration (Optional - for parent notifications)
+   EMAIL_SERVICE=gmail
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASSWORD=your-app-password
+   EMAIL_FROM=your-email@gmail.com
+   
+   # Google Gemini AI API Key (Optional)
+   GOOGLE_GENAI_API_KEY="your_gemini_api_key_here"
    ```
 
    **Database URL Examples**:
@@ -144,6 +150,195 @@ After seeding the database, you can log in with these accounts:
 - **Email**: `tendekai.moyo.82@msu.com` (or any student email from the seeded data)
 - **Password**: `password123`
 - **Access**: Mark attendance, view personal history
+
+## Email Notification System Setup
+
+The system includes automated email notifications to parents/guardians about student attendance. This feature sends both positive updates (good attendance) and alerts (low attendance).
+
+### Email Configuration
+
+1. **Choose an email service** (Gmail recommended for beginners):
+   - **Gmail**: Free, easy setup, reliable
+   - **Outlook/Hotmail**: Good alternative
+   - **Custom SMTP**: For advanced users
+
+2. **Gmail Setup (Recommended)**:
+   
+   **Step 1: Enable 2-Factor Authentication**
+   - Go to [Google Account Security](https://myaccount.google.com/security)
+   - Enable 2-Step Verification if not already enabled
+   
+   **Step 2: Generate App Password**
+   - Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
+   - Select "Mail" and your device
+   - Copy the 16-character app password (e.g., `abcd efgh ijkl mnop`)
+   
+   **Step 3: Add to Environment Variables**
+   ```env
+   # Email Configuration
+   EMAIL_SERVICE=gmail
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASSWORD=your-16-character-app-password
+   EMAIL_FROM=your-email@gmail.com
+   ```
+
+3. **Other Email Services**:
+   
+   **Outlook/Hotmail**:
+   ```env
+   EMAIL_SERVICE=hotmail
+   EMAIL_USER=your-email@outlook.com
+   EMAIL_PASSWORD=your-app-password
+   EMAIL_FROM=your-email@outlook.com
+   ```
+   
+   **Custom SMTP**:
+   ```env
+   EMAIL_SERVICE=smtp
+   EMAIL_HOST=smtp.your-provider.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@domain.com
+   EMAIL_PASSWORD=your-password
+   EMAIL_FROM=your-email@domain.com
+   ```
+
+### Email Features
+
+#### **Automatic Notifications**
+- **Good Attendance (≥50%)**: Sends positive update emails
+- **Low Attendance (<50%)**: Sends alert emails
+- **Course-wise breakdown**: Shows attendance for each course
+- **Professional templates**: HTML and plain text versions
+
+#### **Manual Notifications**
+- **Admin interface**: Send manual updates from `/admin/parent-emails`
+- **Individual alerts**: Target specific students
+- **Bulk operations**: Send to multiple parents
+
+#### **Email Content**
+- **Dynamic subjects**: Different for good vs. bad attendance
+- **Personalized content**: Uses parent/student names
+- **Course details**: Shows attendance for each enrolled course
+- **Action items**: Provides guidance for parents
+
+### Testing Email Setup
+
+1. **Test email configuration**:
+   ```bash
+   # Visit this URL in your browser
+   http://localhost:9002/api/email/test
+   ```
+
+2. **Check admin interface**:
+   - Go to `/admin/parent-emails`
+   - Click "Send Update" for any student with parent email
+   - Verify email is received
+
+## Geofencing System Setup
+
+The system includes location-based attendance validation to ensure students are physically present at the correct venue.
+
+### How Geofencing Works
+
+#### **Core Concepts**
+- **Geofence**: A virtual boundary around a specific location
+- **Radius**: Distance from center point (default: 100 meters)
+- **Validation**: Checks if student's location is within the geofence
+- **Fallback**: Manual override for technical issues
+
+#### **Location Data**
+- **HTML5 Geolocation API**: Gets student's GPS coordinates
+- **Haversine Formula**: Calculates distance between points
+- **Privacy-focused**: No location data stored permanently
+
+### Setting Up Geofences
+
+#### **1. Admin Interface**
+- Navigate to `/admin/geofences`
+- Click "Create New Geofence"
+- Fill in required information
+
+#### **2. Getting Coordinates**
+
+**Method 1: Use Current Location (Recommended)**
+- Click "Use Current Location" button
+- Allow browser location access
+- **Note**: Requires HTTPS or localhost
+
+**Method 2: Google Maps**
+- Go to [Google Maps](https://maps.google.com)
+- Search for your location
+- Right-click on the exact spot
+- Click the coordinates that appear
+- Copy latitude and longitude
+
+**Method 3: Coordinate Helper**
+- Use the built-in coordinate helper in the admin interface
+- Search for locations using Google Maps integration
+- Copy coordinates from search results
+
+#### **3. Geofence Configuration**
+
+**Required Fields**:
+- **Name**: Descriptive name (e.g., "Computer Lab 1")
+- **Description**: Additional details
+- **Latitude**: GPS latitude coordinate
+- **Longitude**: GPS longitude coordinate
+- **Radius**: Distance in meters (default: 100m)
+
+**Example Configuration**:
+```
+Name: MSU Computer Lab 1
+Description: Main computer laboratory building
+Latitude: -19.0160
+Longitude: 29.8579
+Radius: 100
+```
+
+### Testing Geofencing
+
+#### **1. Create Test Geofence**
+- Set up a geofence at your current location
+- Use a small radius (50-100 meters) for testing
+
+#### **2. Test Attendance Marking**
+- Create an attendance session with the geofence
+- Try marking attendance from different locations
+- Verify location validation works
+
+#### **3. Troubleshooting**
+
+**"Use Current Location" Not Working**:
+- **HTTPS Required**: Use `https://` or `localhost`
+- **Permission Denied**: Allow location access in browser
+- **No GPS**: Use coordinate helper instead
+
+**Location Validation Failing**:
+- **Check coordinates**: Verify lat/lng are correct
+- **Adjust radius**: Increase if too restrictive
+- **Browser compatibility**: Try different browser
+
+**Fallback Options**:
+- **Manual override**: Admin can bypass location check
+- **Coordinate helper**: Alternative way to get coordinates
+- **Sample locations**: Pre-configured MSU locations
+
+### Geofencing Best Practices
+
+#### **Radius Guidelines**
+- **Indoor venues**: 50-100 meters
+- **Outdoor venues**: 100-200 meters
+- **Large campuses**: 200-500 meters
+
+#### **Privacy Considerations**
+- **No storage**: Location data not permanently stored
+- **User consent**: Clear permission requests
+- **Fallback options**: Manual override available
+
+#### **Technical Requirements**
+- **HTTPS**: Required for geolocation API
+- **Modern browsers**: Chrome, Firefox, Safari, Edge
+- **GPS enabled**: For mobile devices
 
 ## Optional: Google Gemini AI Setup
 
@@ -216,6 +411,48 @@ npx prisma db push
 - Check API key is valid at [Google AI Studio](https://makersuite.google.com/app/apikey)
 - Ensure you've restarted the server after adding the key
 
+#### 6. Email Notifications Not Working
+
+**Error**: `Failed to send email` or emails not being received
+
+**Solutions**:
+- **Gmail App Password**: Ensure you're using an app password, not your regular password
+- **2FA Required**: Enable 2-factor authentication before generating app password
+- **Check credentials**: Verify `EMAIL_USER` and `EMAIL_PASSWORD` in `.env`
+- **Test email**: Visit `/api/email/test` to verify configuration
+- **Check spam folder**: Emails might be filtered as spam
+- **Rate limits**: Gmail has sending limits (500 emails/day for free accounts)
+
+**Common Gmail Issues**:
+- **"Less secure app access"**: Use app passwords instead
+- **"Invalid credentials"**: Regenerate app password
+- **"Authentication failed"**: Check 2FA is enabled
+
+#### 7. Geofencing Not Working
+
+**Error**: `Use Current Location` button not responding
+
+**Solutions**:
+- **HTTPS Required**: Use `https://` or `localhost` (not `http://` on external domains)
+- **Browser permissions**: Allow location access when prompted
+- **GPS enabled**: Ensure device GPS is enabled for mobile
+- **Fallback method**: Use coordinate helper or manual entry
+
+**Error**: Location validation always failing
+
+**Solutions**:
+- **Check coordinates**: Verify latitude/longitude are correct
+- **Adjust radius**: Increase geofence radius if too restrictive
+- **Test location**: Use coordinate helper to verify your current location
+- **Browser compatibility**: Try different browser (Chrome recommended)
+
+**Error**: "Geolocation not supported"
+
+**Solutions**:
+- **Modern browser**: Use Chrome, Firefox, Safari, or Edge
+- **HTTPS**: Ensure secure connection
+- **Mobile device**: Use device with GPS capability
+
 ### Getting Help
 
 If you encounter issues not covered here:
@@ -258,15 +495,35 @@ npx prisma studio      # Open Prisma Studio (database GUI)
 attendance-system/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
+│   │   ├── admin/           # Admin dashboard pages
+│   │   │   ├── geofences/   # Geofence management
+│   │   │   └── parent-emails/ # Parent email management
+│   │   ├── api/             # API routes
+│   │   │   ├── attendance/  # Attendance endpoints
+│   │   │   ├── email/       # Email testing
+│   │   │   └── scheduler/   # Scheduled jobs
+│   │   └── attendance/      # Student attendance pages
 │   ├── components/          # React components
+│   │   ├── admin/           # Admin-specific components
+│   │   │   ├── geofence-management.tsx
+│   │   │   ├── parent-email-management.tsx
+│   │   │   └── coordinate-helper.tsx
+│   │   └── shared/          # Shared components
+│   │       └── countdown-timer.tsx
 │   ├── lib/                 # Utility functions and configurations
+│   │   ├── email-service.ts # Email notification system
+│   │   ├── attendance-checker.ts # Attendance calculation
+│   │   ├── scheduler.ts     # Scheduled job management
+│   │   └── geofencing.ts    # Location validation
 │   └── ai/                  # AI integration (Genkit)
 ├── prisma/
 │   └── schema.prisma        # Database schema
 ├── scripts/
 │   └── seed-database.js     # Database seeding script
 ├── public/                  # Static assets
-└── docs/                    # Documentation
+├── docs/                    # Documentation
+├── EMAIL-SETUP.md          # Email configuration guide
+└── GEOFENCING-IMPLEMENTATION.md # Geofencing documentation
 ```
 
 ## Next Steps
@@ -274,10 +531,30 @@ attendance-system/
 Once you have the system running:
 
 1. **Explore the interface**: Log in as different user types to understand the system
-2. **Create test data**: Add courses, enroll students, create attendance sessions
-3. **Test attendance marking**: Use the QR code system or manual entry
-4. **Generate reports**: Try the AI-powered reporting features
-5. **Customize**: Modify the system to fit your specific needs
+2. **Set up email notifications**: Configure Gmail app password for parent notifications
+3. **Create geofences**: Set up location boundaries for attendance validation
+4. **Create test data**: Add courses, enroll students, create attendance sessions
+5. **Test attendance marking**: Use the QR code system with geofencing validation
+6. **Test email system**: Send test emails to verify parent notifications work
+7. **Generate reports**: Try the AI-powered reporting features
+8. **Customize**: Modify the system to fit your specific needs
+
+### Key Features to Test
+
+#### **Email System**
+- **Parent notifications**: Test both good and bad attendance emails
+- **Manual alerts**: Use admin interface to send individual updates
+- **Email templates**: Verify HTML and plain text versions work
+
+#### **Geofencing**
+- **Location validation**: Test attendance marking from different locations
+- **Coordinate helper**: Practice getting coordinates for new venues
+- **Fallback options**: Test manual override when location fails
+
+#### **Real-time Features**
+- **Countdown timers**: Verify session time remaining displays correctly
+- **Live attendance**: Check real-time attendance updates
+- **Session management**: Test creating and managing attendance sessions
 
 ## Support
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle, XCircle, Eye, EyeOff, MapPin, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, EyeOff, MapPin, MapPinOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getUserLocation, type Location } from "@/lib/geo-utils";
+import { getCurrentLocation, calculateDistance } from "@/lib/geolocation";
 
 const attendanceSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,18 +24,25 @@ interface AttendanceFormProps {
   sessionId: string;
   sessionCode: string;
   isActive: boolean;
+  courseLocation?: {
+    latitude: number;
+    longitude: number;
+    locationName?: string;
+  };
 }
 
-export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceFormProps) {
+export function AttendanceForm({ sessionId, sessionCode, isActive, courseLocation }: AttendanceFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<{
+    isCaptured: boolean;
+    distance?: number;
+    error?: string;
+  }>({ isCaptured: false });
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
-  const [location, setLocation] = useState<Location | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AttendanceFormData>({
@@ -46,35 +53,40 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
     },
   });
 
-  // Capture location on component mount
-  useEffect(() => {
-    const captureLocation = async () => {
-      if (!isActive) return;
-      
-      setIsGettingLocation(true);
-      setLocationError(null);
-      
-      try {
-        const userLocation = await getUserLocation();
-        setLocation(userLocation);
-        console.log('📍 Location captured:', userLocation);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to get location';
-        setLocationError(errorMessage);
-        console.error('❌ Location error:', errorMessage);
-        
-        toast({
-          variant: "destructive",
-          title: "Location Required",
-          description: "Please enable location access to mark attendance.",
-        });
-      } finally {
-        setIsGettingLocation(false);
-      }
-    };
+  const captureLocation = async () => {
+    if (!courseLocation) {
+      setLocationStatus({ isCaptured: false, error: "Course location not set" });
+      return;
+    }
 
-    captureLocation();
-  }, [isActive, toast]);
+    try {
+      const location = await getCurrentLocation();
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        courseLocation.latitude,
+        courseLocation.longitude
+      );
+
+      setLocationStatus({
+        isCaptured: true,
+        distance: Math.round(distance),
+      });
+
+      toast({
+        title: "Location Captured",
+        description: `You are ${Math.round(distance)}m from the course location.`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to get location";
+      setLocationStatus({ isCaptured: false, error: errorMessage });
+      toast({
+        variant: "destructive",
+        title: "Location Error",
+        description: errorMessage,
+      });
+    }
+  };
 
   const onSubmit = async (data: AttendanceFormData) => {
     if (!isActive) {
@@ -86,12 +98,12 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
       return;
     }
 
-    // Check if location is required but not available
-    if (!location && !locationError) {
+    // Check if location is required and captured
+    if (courseLocation && !locationStatus.isCaptured) {
       toast({
         variant: "destructive",
         title: "Location Required",
-        description: "Please wait for location to be captured or enable location access.",
+        description: "Please capture your location before marking attendance.",
       });
       return;
     }
@@ -100,16 +112,17 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
     setResult(null);
 
     try {
-      const requestBody: any = {
-        sessionId,
-        email: data.email,
-        password: data.password,
-      };
-
-      // Include location if available
-      if (location) {
-        requestBody.latitude = location.latitude;
-        requestBody.longitude = location.longitude;
+      // Get current location if not already captured
+      let locationData = null;
+      if (courseLocation) {
+        if (!locationStatus.isCaptured) {
+          const location = await getCurrentLocation();
+          locationData = {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy,
+          };
+        }
       }
 
       const response = await fetch('/api/attendance/mark', {
@@ -117,7 +130,12 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          sessionId,
+          email: data.email,
+          password: data.password,
+          location: locationData,
+        }),
       });
 
       const result = await response.json();
@@ -235,39 +253,59 @@ export function AttendanceForm({ sessionId, sessionCode, isActive }: AttendanceF
           </p>
         </div>
 
-        {/* Location Status */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Location Status
-          </Label>
-          {isGettingLocation ? (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              <span className="text-sm text-blue-800">Getting your location...</span>
-            </div>
-          ) : location ? (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-green-800">
-                Location captured successfully
-              </span>
-            </div>
-          ) : locationError ? (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <div className="flex-1">
-                <span className="text-sm text-red-800 block">Location access required</span>
-                <span className="text-xs text-red-600">{locationError}</span>
+        {courseLocation && (
+          <div className="space-y-2">
+            <Label>Location Verification</Label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={captureLocation}
+                  disabled={isLoading || !isActive}
+                  className="flex items-center gap-2"
+                >
+                  {locationStatus.isCaptured ? (
+                    <MapPin className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <MapPinOff className="h-4 w-4" />
+                  )}
+                  {locationStatus.isCaptured ? "Location Captured" : "Capture Location"}
+                </Button>
+                {courseLocation.locationName && (
+                  <span className="text-sm text-muted-foreground">
+                    Required: {courseLocation.locationName}
+                  </span>
+                )}
               </div>
+              
+              {locationStatus.isCaptured && locationStatus.distance !== undefined && (
+                <div className="text-sm">
+                  <span className={`font-medium ${
+                    locationStatus.distance <= 50 ? "text-green-600" : "text-red-600"
+                  }`}>
+                    Distance: {locationStatus.distance}m
+                  </span>
+                  {locationStatus.distance > 50 && (
+                    <span className="text-red-600 ml-2">
+                      (Must be within 50m)
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {locationStatus.error && (
+                <p className="text-sm text-red-600">{locationStatus.error}</p>
+              )}
             </div>
-          ) : null}
-        </div>
+          </div>
+        )}
 
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isLoading || !isActive || (!location && !locationError)}
+          disabled={isLoading || !isActive}
         >
           {isLoading ? (
             <>

@@ -4,6 +4,7 @@ import { AttendanceForm } from "@/components/student/attendance-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, QrCode } from "lucide-react";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 
 interface AttendancePageProps {
   params: Promise<{ sessionId: string }>;
@@ -54,32 +55,36 @@ export default async function AttendancePage({ params }: AttendancePageProps) {
             </p>
           </div>
 
+          {/* Countdown Timer */}
+          <CountdownTimer 
+            expiresAt={session.expiresAt}
+            showCurrentTime={true}
+          />
+
           {/* Session Status */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Session Status
+                Session Information
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Session Code: {session.code}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {new Date(session.createdAt).toLocaleString()}
-                  </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Session Code:</span>
+                  <span className="font-mono font-bold text-lg">{session.code}</span>
                 </div>
-                <Badge variant={isActive ? "default" : "destructive"}>
-                  {isActive ? (
-                    <>
-                      <Clock className="h-4 w-4 mr-1" />
-                      Active ({timeRemaining}m left)
-                    </>
-                  ) : (
-                    "Expired"
-                  )}
-                </Badge>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Created:</span>
+                  <span className="text-sm">{new Date(session.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Status:</span>
+                  <Badge variant={isActive ? "default" : "destructive"}>
+                    {isActive ? "Active" : "Expired"}
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -126,6 +131,15 @@ export default async function AttendancePage({ params }: AttendancePageProps) {
                 sessionId={sessionId}
                 sessionCode={session.code}
                 isActive={isActive}
+                courseLocation={
+                  session.course.latitude && session.course.longitude
+                    ? {
+                        latitude: session.course.latitude,
+                        longitude: session.course.longitude,
+                        locationName: session.course.locationName || undefined,
+                      }
+                    : undefined
+                }
               />
             </CardContent>
           </Card>

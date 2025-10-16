@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { ArrowLeft, Copy, QrCode, Users, Clock, CheckCircle } from "lucide-react
 import Link from "next/link";
 import { QRCodeGenerator } from "@/components/lecturer/qr-code-generator";
 import { CopyButton } from "@/components/lecturer/copy-button";
-import { LiveAttendance } from "@/components/lecturer/live-attendance";
+import { OpenStudentPageButton } from "@/components/lecturer/open-student-page-button";
 
 interface SessionPageProps {
   params: Promise<{ courseId: string; sessionId: string }>;
@@ -25,14 +25,28 @@ export default async function SessionPage({ params }: SessionPageProps) {
   const token = cookieStore.get('auth-token')?.value;
   
   if (!token) {
-    redirect('/login');
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Not Authenticated</h2>
+          <p className="text-muted-foreground">Please log in to access this page.</p>
+        </div>
+      </div>
+    );
   }
 
   // Verify the token and get user info
   const userPayload = verifyToken(token);
   
   if (!userPayload || userPayload.role !== 'LECTURER') {
-    redirect('/login');
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight font-headline">Access Denied</h2>
+          <p className="text-muted-foreground">This page is only accessible to lecturers.</p>
+        </div>
+      </div>
+    );
   }
 
   // Get the session with course and attendance data
@@ -79,19 +93,22 @@ export default async function SessionPage({ params }: SessionPageProps) {
           <h2 className="text-2xl font-bold tracking-tight font-headline">Attendance Session</h2>
           <p className="text-muted-foreground">{session.course.name} - {session.course.code}</p>
         </div>
-        <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-2">
-          {isActive ? (
-            <>
-              <CheckCircle className="h-4 w-4" />
-              Active
-            </>
-          ) : (
-            <>
-              <Clock className="h-4 w-4" />
-              Expired
-            </>
-          )}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <OpenStudentPageButton sessionId={sessionId} />
+          <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-2">
+            {isActive ? (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                Active
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4" />
+                Expired
+              </>
+            )}
+          </Badge>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -187,22 +204,37 @@ export default async function SessionPage({ params }: SessionPageProps) {
         </CardContent>
       </Card>
 
-      {/* Live Attendance */}
-      <LiveAttendance 
-        sessionId={sessionId}
-        initialData={{
-          sessionId,
-          count: session.attendancerecord.length,
-          records: session.attendancerecord.map(record => ({
-            id: record.id,
-            studentName: record.user.name,
-            studentEmail: record.user.email,
-            timestamp: record.timestamp.toISOString(),
-            status: record.status
-          })),
-          lastUpdate: new Date().toISOString()
-        }}
-      />
+      {/* Recent Attendance */}
+      {session.attendancerecord.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Attendance</CardTitle>
+            <CardDescription>
+              Students who have marked their attendance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {session.attendancerecord.slice(0, 10).map((record) => (
+                <div key={record.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                  <div>
+                    <p className="font-medium">{record.user.name}</p>
+                    <p className="text-sm text-muted-foreground">{record.user.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(record.timestamp).toLocaleTimeString()}
+                    </p>
+                    <Badge variant="outline" className="text-xs">
+                      {record.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

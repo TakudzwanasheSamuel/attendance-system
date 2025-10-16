@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
-import { invalidateStudentCache, invalidateSessionCache } from '@/lib/queries';
-import { cookies } from 'next/headers';
-import bcrypt from 'bcryptjs';
-import { isWithinGeoFence, isValidLocation, formatDistance } from '@/lib/geo-utils';
+import { verifyPassword } from '@/lib/auth';
+import { calculateDistance } from '@/lib/geolocation';
 
 // Generate a unique ID
 function generateId(): string {
@@ -13,62 +10,14 @@ function generateId(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const requestBody = await request.json();
-    const { sessionId, latitude, longitude, email, password } = requestBody;
+    const { sessionId, email, password, location } = await request.json();
 
-    let student = null;
-
-    // Try cookie-based authentication first
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
-    
-    if (token) {
-      const userPayload = verifyToken(token);
-      if (userPayload && userPayload.role === 'STUDENT') {
-        student = await prisma.user.findUnique({
-          where: { id: userPayload.id }
-        });
-      }
-    }
-
-    // If no cookie auth, try email/password authentication
-    if (!student && email && password) {
-      const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() }
-      });
-
-      if (!user || user.role !== 'STUDENT') {
-        return NextResponse.json(
-          { success: false, error: 'Invalid credentials or not a student account' },
-          { status: 401 }
-        );
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid credentials' },
-          { status: 401 }
-        );
-      }
-
-      student = user;
-    }
-
-    // If neither authentication method worked
-    if (!student) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required. Please provide valid credentials.' },
-        { status: 401 }
-      );
-    }
-
-    console.log('🔍 Marking attendance for:', { sessionId, studentId: student.id });
+    console.log('🔍 Marking attendance for:', { sessionId, email });
 
     // Validate input
-    if (!sessionId) {
+    if (!sessionId || !email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Session ID is required' },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -77,7 +26,8 @@ export async function POST(request: NextRequest) {
     const session = await prisma.attendancesession.findUnique({
       where: { id: sessionId },
       include: {
-        course: true
+        course: true,
+        geofence: true
       }
     });
 
@@ -96,50 +46,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce geofencing if required
-    if (session.requireLocation) {
-      // Check if location data is provided
-      if (!latitude || !longitude) {
-        return NextResponse.json(
-          { success: false, error: 'Location is required for this session. Please enable location access and try again.' },
-          { status: 400 }
-        );
-      }
+    // Find the student
+    const student = await prisma.user.findUnique({
+      where: { email }
+    });
 
-      // Validate location coordinates
-      if (!isValidLocation(latitude, longitude)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid location coordinates provided.' },
-          { status: 400 }
-        );
-      }
-
-      // Check if session has geofencing configured
-      if (session.latitude && session.longitude && session.radiusMeters) {
-        const geoFenceResult = isWithinGeoFence(
-          { latitude, longitude },
-          {
-            centerLatitude: session.latitude,
-            centerLongitude: session.longitude,
-            radiusMeters: session.radiusMeters
-          }
-        );
-
-        if (!geoFenceResult.isWithin) {
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: `You are outside the allowed area for this session. You are ${formatDistance(geoFenceResult.distance)} away from the session location. Please move closer and try again.` 
-            },
-            { status: 403 }
-          );
-        }
-
-        console.log(`✅ Geofencing passed: Student is ${formatDistance(geoFenceResult.distance)} from session center`);
-      }
+    if (!student) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
-    // Student is already authenticated and retrieved above
+    // Verify password
+    const isValidPassword = await verifyPassword(password, student.password);
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
 
     // Check if student is enrolled in the course
     const enrollment = await prisma.courseenrollment.findUnique({
@@ -175,29 +101,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create attendance record
-    const attendanceData: any = {
-      id: generateId(),
-      sessionId: sessionId,
-      studentId: student.id,
-      status: 'Present'
-    };
+    // Location validation (if geofence or course has location set)
+    let locationValidated = false;
+    let distanceFromLocation = null;
+    
+    // Check if session has geofence or course has location
+    const hasGeofence = session.geofence && session.geofence.isActive;
+    const hasCourseLocation = session.course.latitude && session.course.longitude;
+    
+    if (hasGeofence || hasCourseLocation) {
+      if (!location) {
+        return NextResponse.json(
+          { success: false, error: 'Location is required for this course' },
+          { status: 400 }
+        );
+      }
 
-    // Add location data if provided
-    if (latitude && longitude) {
-      attendanceData.latitude = latitude;
-      attendanceData.longitude = longitude;
+      // Use geofence location if available, otherwise use course location
+      const targetLatitude = hasGeofence ? session.geofence.latitude : session.course.latitude;
+      const targetLongitude = hasGeofence ? session.geofence.longitude : session.course.longitude;
+      const maxDistance = hasGeofence ? session.geofence.radius : 50; // Default 50m for course location
+
+      distanceFromLocation = calculateDistance(
+        location.latitude,
+        location.longitude,
+        targetLatitude,
+        targetLongitude
+      );
+
+      // Check if within the allowed distance
+      if (distanceFromLocation > maxDistance) {
+        const locationType = hasGeofence ? 'geofence' : 'course location';
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `You are ${Math.round(distanceFromLocation)}m away from the ${locationType}. You must be within ${maxDistance}m to mark attendance.` 
+          },
+          { status: 400 }
+        );
+      }
+
+      locationValidated = true;
     }
 
+    // Create attendance record
     const attendanceRecord = await prisma.attendancerecord.create({
-      data: attendanceData
+      data: {
+        id: generateId(),
+        sessionId: sessionId,
+        studentId: student.id,
+        status: 'Present',
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        accuracy: location?.accuracy || null,
+        geofenceId: session.geofenceId || null,
+        isLocationValid: locationValidated,
+        locationTimestamp: location ? new Date() : null
+      }
     });
 
     console.log('✅ Attendance marked successfully:', attendanceRecord.id);
-
-    // Invalidate relevant caches
-    invalidateStudentCache(student.id);
-    invalidateSessionCache(sessionId);
 
     return NextResponse.json({
       success: true,

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { courseId, duration = 15, startDelay = 0 } = await request.json();
+    const { courseId, duration = 15, geofenceId } = await request.json();
 
     console.log('🔍 Creating session for course:', courseId, 'by lecturer:', userPayload.id);
 
@@ -65,13 +65,23 @@ export async function POST(request: NextRequest) {
     // Generate a unique session code
     const sessionCode = generateSessionCode();
     
-    // Calculate start time and expiration time
-    const now = new Date();
-    const startsAt = new Date(now);
-    startsAt.setMinutes(startsAt.getMinutes() + startDelay);
-    
-    const expiresAt = new Date(startsAt);
+    // Calculate expiration time
+    const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + duration);
+
+    // Verify geofence exists if provided
+    if (geofenceId) {
+      const geofence = await prisma.geofence.findUnique({
+        where: { id: geofenceId }
+      });
+      
+      if (!geofence || !geofence.isActive) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid or inactive geofence' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Create the session
     const session = await prisma.attendancesession.create({
@@ -79,8 +89,9 @@ export async function POST(request: NextRequest) {
         id: generateId(), // Add the missing id field
         courseId: courseId,
         code: sessionCode,
-        startsAt: startDelay > 0 ? startsAt : null,
-        expiresAt: expiresAt
+        expiresAt: expiresAt,
+        geofenceId: geofenceId || null,
+        requireLocation: !!geofenceId
       }
     });
 

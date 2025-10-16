@@ -3,8 +3,10 @@
 import { validateAttendanceSession, ValidateAttendanceSessionInput } from "@/ai/flows/validate-attendance-session";
 import { prisma } from "@/lib/prisma";
 import { markAttendance as markAttendanceDB } from "@/lib/database-actions";
+import { markAttendanceWithLocation } from "@/lib/geofence-actions";
 import { cookies, headers } from "next/headers";
 import { verifyToken } from "@/lib/auth";
+import { type Location } from "@/lib/geofencing";
 import { isWithinGeoFence } from "@/lib/geo-utils";
 import { detectVPN, shouldBlockAttendance } from "@/lib/vpn-detection";
 
@@ -15,7 +17,7 @@ interface MarkAttendanceInput {
   userAgent?: string;
 }
 
-export async function markAttendance(input: string | MarkAttendanceInput) {
+export async function markAttendance(input: string | MarkAttendanceInput, location?: Location) {
   // Support both old (string) and new (object) input formats
   const sessionCode = typeof input === 'string' ? input : input.sessionCode;
   const latitude = typeof input === 'object' ? input.latitude : undefined;
@@ -49,7 +51,8 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
         expiresAt: { gt: new Date() }
       },
       include: {
-        course: true
+        course: true,
+        geofence: true
       }
     });
 
@@ -58,18 +61,6 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
         isValidSession: false,
         isEnrolled: false,
         validationMessage: "Invalid or expired session code.",
-      };
-    }
-
-    // Check if session has started (if startDelay was set)
-    const now = new Date();
-    if (session.startsAt && session.startsAt > now) {
-      const minutesUntilStart = Math.ceil((session.startsAt.getTime() - now.getTime()) / 60000);
-      return {
-        isValidSession: true,
-        isEnrolled: false,
-        validationMessage: `This session hasn't started yet. Please wait ${minutesUntilStart} minute${minutesUntilStart !== 1 ? 's' : ''} before recording attendance.`,
-        sessionNotStarted: true,
       };
     }
 
@@ -109,13 +100,32 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
       };
     }
 
-    // Geo-fence verification
+    // Geo-fence verification and VPN detection
     let isVerified = true;
     let verificationNotes: string[] = [];
     let distance: number | undefined;
 
-    if (session.requireLocation && session.latitude && session.longitude) {
-      if (!latitude || !longitude) {
+    // VPN Detection
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+    const userAgentString = userAgent || headersList.get('user-agent') || 'unknown';
+    
+    const vpnCheck = await detectVPN(ipAddress);
+    if (vpnCheck.isVPN && shouldBlockAttendance(vpnCheck)) {
+      return {
+        isValidSession: true,
+        isEnrolled: true,
+        validationMessage: "Attendance blocked: VPN detected. Please disable VPN and try again.",
+        isBlocked: true,
+      };
+    }
+
+    // Location verification
+    if (session.requireLocation && (session.latitude || session.geofenceId)) {
+      const currentLat = latitude || location?.latitude;
+      const currentLng = longitude || location?.longitude;
+      
+      if (!currentLat || !currentLng) {
         return {
           isValidSession: true,
           isEnrolled: true,
@@ -124,79 +134,85 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
         };
       }
 
-      const geoCheck = isWithinGeoFence(
-        { latitude, longitude },
-        {
-          centerLatitude: session.latitude,
-          centerLongitude: session.longitude,
-          radiusMeters: session.radiusMeters || 50,
+      // Use geofence if available, otherwise use session coordinates
+      if (session.geofenceId && session.geofence) {
+        const geoCheck = isWithinGeoFence(
+          { latitude: currentLat, longitude: currentLng },
+          {
+            centerLatitude: session.geofence.latitude,
+            centerLongitude: session.geofence.longitude,
+            radiusMeters: session.geofence.radiusMeters || 100,
+          }
+        );
+
+        distance = geoCheck.distance;
+
+        if (!geoCheck.isWithin) {
+          isVerified = false;
+          verificationNotes.push(
+            `Location verification failed: ${Math.round(geoCheck.distance)}m from venue (max: ${session.geofence.radiusMeters}m)`
+          );
         }
-      );
+      } else if (session.latitude && session.longitude) {
+        const geoCheck = isWithinGeoFence(
+          { latitude: currentLat, longitude: currentLng },
+          {
+            centerLatitude: session.latitude,
+            centerLongitude: session.longitude,
+            radiusMeters: session.radiusMeters || 100,
+          }
+        );
 
-      distance = geoCheck.distance;
+        distance = geoCheck.distance;
 
-      if (!geoCheck.isWithin) {
-        // Block attendance if outside the geofence
-        return {
-          isValidSession: true,
-          isEnrolled: true,
-          validationMessage: `You are too far from the session location. You are ${Math.round(geoCheck.distance)}m away (maximum allowed: ${session.radiusMeters || 50}m). Please move closer to record attendance.`,
-          locationBlocked: true,
-          distance: Math.round(geoCheck.distance),
-        };
+        if (!geoCheck.isWithin) {
+          isVerified = false;
+          verificationNotes.push(
+            `Location verification failed: ${Math.round(geoCheck.distance)}m from venue (max: ${session.radiusMeters}m)`
+          );
+        }
       }
     }
 
-    // Get IP address
-    const headersList = await headers();
-    const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0] || 
-                      headersList.get('x-real-ip') || 
-                      'unknown';
-
-    // VPN Detection
-    const vpnDetection = await detectVPN(ipAddress, userAgent);
-    
-    // Check if VPN should block attendance (strict mode enabled)
-    if (shouldBlockAttendance(vpnDetection, true)) {
-      return {
-        isValidSession: true,
-        isEnrolled: true,
-        validationMessage: "VPN or proxy detected. Please disable your VPN and try again.",
-        vpnDetected: true,
-        vpnDetails: {
-          confidence: vpnDetection.confidence,
-          reasons: vpnDetection.reasons,
-        },
-      };
-    }
-
     // Add VPN check notes to verification if VPN detected but not blocking
-    if (vpnDetection.isVPN) {
+    if (vpnCheck.isVPN) {
       verificationNotes.push(
-        `VPN/Proxy suspected (${vpnDetection.confidence} confidence): ${vpnDetection.reasons.join(', ')}`
+        `VPN/Proxy suspected (${vpnCheck.confidence} confidence): ${vpnCheck.reasons.join(', ')}`
       );
     }
 
-    // Generate unique ID
-    const id =
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15);
-
-    // Mark attendance with verification data
-    await prisma.attendancerecord.create({
-      data: {
-        id,
+    // Use location-aware attendance marking if location is provided
+    if (location || (latitude && longitude)) {
+      const result = await markAttendanceWithLocation({
         sessionId: session.id,
-        studentId: user.id,
+        userId: user.id,
         status: 'Present',
-        latitude,
-        longitude,
+        latitude: currentLat,
+        longitude: currentLng,
+        accuracy: location?.accuracy,
+        geofenceId: session.geofenceId || undefined,
+        isLocationValid: isVerified,
         ipAddress,
-        userAgent,
+        userAgent: userAgentString,
         isVerified,
         verificationNotes: verificationNotes.length > 0 ? verificationNotes.join('; ') : null,
-      },
-    });
+      });
+
+      if (!result.success) {
+        return {
+          isValidSession: true,
+          isEnrolled: true,
+          validationMessage: result.error || "Failed to mark attendance.",
+        };
+      }
+    } else {
+      // Fallback to regular attendance marking
+      await markAttendanceDB({
+        sessionId: session.id,
+        studentId: user.id,
+        status: 'Present'
+      });
+    }
 
     return {
       isValidSession: true,
@@ -213,5 +229,71 @@ export async function markAttendance(input: string | MarkAttendanceInput) {
       isEnrolled: false,
       validationMessage: "An unexpected error occurred. Please try again.",
     };
+  }
+}
+
+export async function getActiveAttendanceSessions() {
+  try {
+    // Get current user from token
+    const token = cookies().get('auth-token')?.value;
+    if (!token) {
+      return { success: false, error: "Please log in to view attendance sessions." };
+    }
+
+    const user = verifyToken(token);
+    if (!user || user.role !== 'STUDENT') {
+      return { success: false, error: "Only students can view attendance sessions." };
+    }
+
+    // Get all active sessions with geofence information
+    const sessions = await prisma.attendancesession.findMany({
+      where: {
+        expiresAt: { gt: new Date() }
+      },
+      include: {
+        course: {
+          include: {
+            courseenrollment: {
+              where: {
+                studentId: user.id
+              }
+            }
+          }
+        },
+        geofence: true
+      },
+      orderBy: {
+        expiresAt: 'asc'
+      }
+    });
+
+    // Filter sessions where the student is enrolled
+    const enrolledSessions = sessions.filter(session => 
+      session.course.courseenrollment.length > 0
+    );
+
+    return { 
+      success: true, 
+      sessions: enrolledSessions.map(session => ({
+        id: session.id,
+        code: session.code,
+        course: {
+          name: session.course.name,
+          code: session.course.code
+        },
+        expiresAt: session.expiresAt,
+        geofence: session.geofence ? {
+          id: session.geofence.id,
+          name: session.geofence.name,
+          latitude: session.geofence.latitude,
+          longitude: session.geofence.longitude,
+          radius: session.geofence.radius
+        } : undefined,
+        requireLocation: session.requireLocation
+      }))
+    };
+  } catch (error) {
+    console.error("Error in getActiveAttendanceSessions action:", error);
+    return { success: false, error: "An unexpected error occurred. Please try again." };
   }
 }

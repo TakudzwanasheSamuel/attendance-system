@@ -1,6 +1,8 @@
 import { AttendanceTracker } from "@/components/lecturer/attendance-tracker";
 import { CreateSessionDialog } from "@/components/lecturer/create-session-dialog";
 import { EnrolledStudentsDialog } from "@/components/lecturer/enrolled-students-dialog";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
+import { LiveAttendance } from "@/components/lecturer/live-attendance";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
@@ -91,6 +93,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
         <CreateSessionDialog courseId={course.id} activeSession={activeSession} />
       </div>
 
+      {/* Countdown Timer - Only show if there's an active session */}
+      {activeSession && (
+        <CountdownTimer 
+          expiresAt={activeSession.expiresAt}
+          showCurrentTime={true}
+        />
+      )}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -115,7 +125,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
         </Card>
       </div>
 
-      {activeSession && <AttendanceTracker attendedStudents={attendedStudents} />}
+      {/* Live Attendance Section - Only show if there's an active session */}
+      {activeSession && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <LiveAttendance sessionId={activeSession.id} />
+          <AttendanceTracker attendedStudents={attendedStudents} />
+        </div>
+      )}
 
     </div>
   );

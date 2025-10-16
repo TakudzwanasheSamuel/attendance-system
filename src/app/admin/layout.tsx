@@ -3,13 +3,15 @@ import { UserNav } from "@/components/shared/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { admins } from "@/lib/mock-data";
-import { LayoutDashboard, Users, BookMarked, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, BookMarked, BarChart3, MapPin, Mail } from "lucide-react";
 import React from "react";
 
 const adminNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard /> },
   { href: "/admin/users", label: "User Management", icon: <Users /> },
   { href: "/admin/courses", label: "Course Management", icon: <BookMarked /> },
+  { href: "/admin/geofences", label: "Geofence Management", icon: <MapPin /> },
+  { href: "/admin/parent-emails", label: "Parent Emails", icon: <Mail /> },
   { href: "/admin/reports", label: "Reports", icon: <BarChart3 /> },
 ];
 

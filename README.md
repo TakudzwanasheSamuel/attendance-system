@@ -1,172 +1,208 @@
 # Smart Student Monitoring System
 
-An **enterprise-grade** attendance tracking system built with Next.js 15 and TypeScript. Features real-time tracking, mobile QR scanning, intelligent caching, and comprehensive analytics for educational institutions.
+A modern, full-stack attendance tracking system built with Next.js and TypeScript. Features mobile QR code scanning, geofencing, VPN detection, AI-powered analytics, and automated parent notifications for educational institutions.
 
-## ⚡ Enterprise Features
+## Core Features
 
-- **🔴 Real-Time Tracking** - Live attendance updates with Server-Sent Events
-- **📱 Mobile-First PWA** - Progressive Web App with offline capabilities
-- **⚡ 60% Faster Queries** - Intelligent caching and database optimization
-- **📊 Data Export** - CSV/JSON export with role-based permissions
-- **🛡️ Error Boundaries** - Graceful error handling and recovery
-- **📈 System Monitoring** - Health checks and performance metrics
-- **🌍 Advanced Geofencing** - Campus-specific location enforcement (MSU Gweru optimized)
-- **🔒 Security Suite** - VPN detection, fraud prevention, and privacy protection
-- **🤖 AI Analytics** - Google Gemini powered insights and reports
+### 1. Role-Based Access Control
+The system has three distinct user roles, ensuring users only see what's relevant to them:
+- **👨‍🎓 Student**: Mark attendance via QR codes, view attendance history
+- **👨‍🏫 Lecturer**: Create sessions, manage courses, generate reports
+- **👨‍💼 Administrator**: Full system control, user/course management, analytics
 
-## Tech Stack
+### 2. AI-Powered Reporting & Validation
+- **Comprehensive Reports**: Both Lecturers and Administrators can generate detailed attendance reports using AI. The system analyzes filtered data to produce summaries, identify trends, and offer actionable insights.
+- **Smart Validation**: Student attendance submissions are validated by an AI flow that checks for active session codes and course enrollment simultaneously.
 
-**Core:** Next.js 15 • TypeScript • Tailwind CSS • ShadCN UI  
-**Database:** MySQL • Prisma ORM with strategic indexing  
-**Performance:** Intelligent caching • Server-Sent Events • PWA  
-**AI:** Google Genkit • Gemini integration
+### 3. Real-time Attendance Tracking
+- **Session Codes & QR Codes**: Lecturers can generate unique, time-sensitive codes for each class session.
+- **Live Updates**: When a session is active, lecturers can see students check in, in real-time.
+- **Countdown Timers**: Real-time session countdown with current date/time display.
+- **Geofencing**: Location-based attendance validation to ensure students are physically present.
 
-## Quick Start
+### 4. Email Notification System
+- **Parent Notifications**: Automated emails to parents/guardians about student attendance.
+- **Smart Alerts**: Sends positive updates for good attendance (≥50%) and alerts for low attendance (<50%).
+- **Professional Templates**: HTML and plain text email templates with course-wise breakdown.
+- **Manual Controls**: Admin interface for sending individual or bulk notifications.
 
-**⚡ 5-minute setup:** See [QUICK-START.md](./QUICK-START.md) for mobile access configuration.
+### 5. Geofencing & Location Validation
+- **Virtual Boundaries**: Create geofences around specific venues with configurable radius.
+- **GPS Validation**: Uses HTML5 Geolocation API to verify student location.
+- **Coordinate Helper**: Built-in tools for getting accurate coordinates.
+- **Fallback Options**: Manual override for technical issues or special circumstances.
 
-## Installation
+### 6. Full-Featured Management Portals
+- **User Management (Admin)**: Admins can create, view, search, edit, and delete all users in the system.
+- **Course Management (Admin)**: Admins have full control over the course catalog, including creating courses, assigning lecturers, and managing student enrollments.
+- **Geofence Management (Admin)**: Create and manage location boundaries for attendance validation.
+- **Parent Email Management (Admin)**: Manage parent contact information and send attendance notifications.
 
-### Prerequisites
-- **Node.js 18+** - [Download here](https://nodejs.org/)
-- **MySQL 8.0+** - [Download here](https://dev.mysql.com/downloads/mysql/)
+## Technology Stack
 
-### Step 1: Clone and Install
-```bash
-git clone https://github.com/TakudzwanasheSamuel/attendance-system.git
-cd attendance-system
-npm install --legacy-peer-deps
-```
+- **Framework**: [Next.js](https://nextjs.org/) (with App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
+- **AI Integration**: [Google's Genkit](https://firebase.google.com/docs/genkit)
+- **Database**: [MySQL](https://www.mysql.com/) with [Prisma ORM](https://www.prisma.io/)
+- **Email Service**: [Nodemailer](https://nodemailer.com/) with SMTP support
+- **Scheduling**: [node-cron](https://www.npmjs.com/package/node-cron) for automated tasks
+- **Geolocation**: HTML5 Geolocation API with Haversine formula for distance calculation
 
-### Step 2: MySQL Database Setup
-```bash
-# Start MySQL service (if not running)
-# Windows: net start mysql80
-# macOS/Linux: sudo systemctl start mysql
-# Connect to MySQL and create database
-mysql -u root -p
-```
+## 🚀 Key Features
 
-In MySQL console:
-```sql
-CREATE DATABASE IF NOT EXISTS attendance_system;
-EXIT;
-```
+- **📱 Mobile QR Code Access** - Students scan QR codes with their phones (no app required)
+- **🔒 VPN Detection** - Blocks attendance through VPNs/proxies to prevent spoofing
+- **📍 Geofencing** - GPS-based location verification for physical presence
+- **🤖 AI Reports** - Intelligent attendance analytics with Google Gemini
+- **⚡ Real-time Updates** - Live attendance tracking during sessions
+- **👥 Role-Based Access** - Separate dashboards for Students, Lecturers, and Admins
 
-### Step 3: Configure Environment
-```bash
-# Copy environment template
-cp env.example .env
+**Quick Setup:** See [QUICK-START.md](./QUICK-START.md) for mobile access and VPN detection setup.
 
-# Edit .env file with your MySQL credentials
-# Update DATABASE_URL line:
-# DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3306/attendance_system"
-```
+## Getting Started
 
-**Common DATABASE_URL formats:**
-- With password: `mysql://root:password@localhost:3306/attendance_system`
-- No password: `mysql://root@localhost:3306/attendance_system`
-- Custom user: `mysql://username:password@localhost:3306/attendance_system`
+📋 **For detailed setup instructions, please see [SETUP-INSTRUCTIONS.md](./docs/SETUP-INSTRUCTIONS.md)**
 
-### Step 4: Database Schema & Seeding
-```bash
-# Generate Prisma client
-npx prisma generate
+### Quick Start
 
-# Create database tables
-npx prisma db push
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/TakudzwanasheSamuel/attendance-system.git
+   cd attendance-system
+   ```
 
-# Seed with demo data (117 users, 20 courses, sample sessions)
-npm run seed
-```
+2. **Install dependencies** (⚠️ Use legacy peer deps flag):
+   ```bash
+   npm install --legacy-peer-deps
+   ```
 
-### Step 5: Start Development Server
-```bash
-npm run dev
-```
+3. **Set up environment variables**:
+   ```bash
+   cp env.example .env
+   # Edit .env with your database credentials
+   ```
 
-🚀 **Application runs at:** `http://localhost:9002`
+4. **Set up database and seed data**:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   npm run seed
+   ```
 
-## 👥 Demo Accounts & Test Data
+5. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:9002`.
 
-After running `npm run seed`, the system creates **117 users, 20 courses, and sample attendance sessions** for testing.
+### Demo Login Credentials
 
-### Primary Demo Accounts
-| Role | Email | Password | Access Level |
-|------|-------|----------|--------------|
-| **🔑 Admin** | `admin@msu.com` | `password123` | Full system access, user management, analytics |
-| **👨‍🎓 Student** | `tinashe.mazvihwa.40@msu.com` | `password123` | Course enrollment, attendance marking |
-| **👨‍🏫 Lecturer** | `blessing.moyo.12@msu.com` | `password123` | Course management, session creation |
+After seeding the database, you can log in with these accounts:
 
-### Additional Test Accounts
-| Type | Count | Pattern | Password |
-|------|-------|---------|----------|
-| **Students** | 100+ | `firstname.lastname.##@msu.com` | `password123` |
-| **Lecturers** | 10+ | `firstname.lastname.##@msu.com` | `password123` |
-| **Courses** | 20 | Various departments (CS, ENG, BUS, etc.) | - |
+- **Admin**: `admin@msu.com` / `password123`
+- **Student**: `tinashe.mazvihwa.40@msu.com` / `password123` (or any student from database)
+- **Lecturer**: Any lecturer email from database (format: `firstname.lastname.##@msu.com`)
 
-### Sample Data Includes:
-- **🏫 MSU Gweru Campus** - Geofencing locations configured
-- **📚 Course Enrollments** - Students pre-enrolled in multiple courses  
-- **📊 Attendance Records** - Historical data for testing analytics
-- **🎯 Active Sessions** - Live sessions for immediate testing
-- **🌍 Geofenced Sessions** - Location-based attendance testing
+<<<<<<< HEAD
+## Key Features
 
-### Quick Test Scenarios:
-```bash
-# Test geofencing (MSU Gweru campus)
-node scripts/msu-gweru-geofencing.js create-session main-campus
+### 🎯 **Smart Attendance Tracking**
+- **QR Code System**: Quick and secure attendance marking
+- **Real-time Validation**: Instant verification of session codes and enrollment
+- **Location Verification**: Geofencing ensures students are physically present
+- **Session Management**: Time-limited attendance windows with countdown timers
 
-# Create test session for any course
-node scripts/create-test-session.js
+### 📧 **Parent Communication**
+- **Automated Notifications**: Smart emails for both good and poor attendance
+- **Professional Templates**: Beautiful HTML emails with course breakdowns
+- **Manual Controls**: Admin can send individual or bulk notifications
+- **Multi-language Support**: Ready for localization
 
-# Check system health
-node scripts/comprehensive-system-test.js
-```
+### 🗺️ **Geofencing System**
+- **Virtual Boundaries**: Create location-based attendance zones
+- **GPS Integration**: Uses device location for validation
+- **Flexible Configuration**: Adjustable radius and multiple venues
+- **Fallback Options**: Manual override for technical issues
 
-**🔧 Troubleshooting:** If login fails, run `npm run seed` to reset demo data.
+### 🤖 **AI-Powered Insights**
+- **Smart Reports**: AI-generated attendance analysis and trends
+- **Predictive Analytics**: Identify at-risk students early
+- **Automated Summaries**: Comprehensive reports for administrators
+- **Actionable Insights**: Recommendations for improving attendance
 
-## 📚 Documentation
+### 👥 **Role-Based Access**
+- **Student Portal**: Mark attendance, view personal history
+- **Lecturer Dashboard**: Manage courses, create sessions, view reports
+- **Admin Control**: Full system management and oversight
+- **Secure Authentication**: JWT-based security with role validation
 
-| Document | Description |
-|----------|-------------|
-| **[Quick Start](./QUICK-START.md)** | 5-minute setup guide |
-| **[Features](./FEATURES.md)** | Complete feature overview |
-| **[API Reference](./API.md)** | Complete API documentation |
-| **[Testing Guide](./TESTING.md)** | Comprehensive testing framework |
-| **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** | Detailed installation guide |
-| **[Mobile Access](./docs/MOBILE-ACCESS.md)** | Network configuration |
-| **[Deployment Guide](./docs/DEPLOYMENT.md)** | Production deployment |
-| **[Contributing](./docs/CONTRIBUTING.md)** | Development guidelines |
+## Documentation
 
-📖 **[Full Documentation Index](./docs/README.md)** | 📁 **[Project Structure](./PROJECT-STRUCTURE.md)**
+- **[Setup Instructions](./SETUP-INSTRUCTIONS.md)**: Complete installation and configuration guide
+- **[Email Setup](./EMAIL-SETUP.md)**: Email notification system configuration
+- **[Geofencing Guide](./GEOFENCING-IMPLEMENTATION.md)**: Location validation setup and usage
 
-## 🧪 Quality Assurance
+## Contributing
 
-**✅ Comprehensive Testing Suite**
-- **100% Component Coverage** - All system components tested
-- **Database Integrity** - 4,181+ records validated
-- **Performance Benchmarks** - Sub-50ms query times verified
-- **Geofencing Accuracy** - MSU Gweru campus locations tested
-- **Authentication Security** - All user roles and flows validated
-- **API Reliability** - Health, attendance, and real-time endpoints verified
-
-**🎯 Test Results: 16/16 Tests Passed (100% Success Rate)**
-
-## Performance & Capabilities
-
-**🚀 Performance:** Sub-second response times • 60% faster queries • Intelligent caching  
-**📱 Mobile:** PWA support • QR scanning • Touch-optimized • Geolocation  
-**🔴 Real-Time:** Live updates • SSE streaming • Connection monitoring  
-**📊 Analytics:** AI reports • Data export • System monitoring • Health checks  
-**🌍 Geofencing:** Campus enforcement • MSU Gweru optimized • Privacy-first GPS  
-**🛡️ Security:** VPN detection • Error boundaries • JWT auth • Fraud prevention  
-**⚙️ Enterprise:** Batch operations • Role-based access • Audit trails
+We welcome contributions! Please see our [Contributing Guidelines](./CONTRIBUTING.md) for details.
 
 ## License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Support
+
+For support, email support@msu.com or create an issue in the GitHub repository.
 
 ---
 
-**Built for educational institutions** 🎓
+**Built with ❤️ for Midlands State University**
+
+ 
+=======
+**To find more accounts:**
+```bash
+# Check MySQL database
+mysql -u root -p
+USE smart_student_monitoring;
+SELECT email, name, role FROM users LIMIT 10;
+```
+
+All seeded accounts use password: `password123`
+
+**Note:** If login fails, reseed the database:
+```bash
+npm run seed
+```
+
+## 📖 Documentation
+
+### Quick Start
+- **[Quick Start Guide](./QUICK-START.md)** - 5-minute setup for mobile access and VPN detection
+
+### Setup & Configuration
+- **[Setup Instructions](./docs/SETUP-INSTRUCTIONS.md)** - Complete installation guide
+- **[Mobile Access](./docs/MOBILE-ACCESS.md)** - Detailed mobile configuration
+- **[VPN Detection](./docs/VPN-DETECTION.md)** - VPN/proxy detection setup
+
+### Technical Reference
+- **[Database Structure](./docs/database-structure.md)** - Schema and relationships
+- **[Backend Structure](./docs/backend-structure.md)** - Architecture overview
+- **[Geofencing](./IMPLEMENTATION-SUMMARY.md)** - Location verification details
+- **[Database SQL](./docs/database.sql)** - SQL schema for manual setup
+
+## ✨ Additional Features
+
+- **🌓 Dark/Light Mode** - Theme toggle with system preference support
+- **📱 PWA Support** - Install as app on mobile home screen
+- **🔄 Real-time Sync** - Live updates across all connected devices
+- **📊 Analytics Dashboard** - Comprehensive attendance statistics
+- **🔐 Secure Authentication** - JWT-based with bcrypt password hashing
+- **🎨 Modern UI** - Clean, intuitive interface with ShadCN components
+
+## 📝 License
+
+This project is licensed under the MIT License.
+>>>>>>> f80bbbd0ad13078efe88517bd4970807d87b172a
