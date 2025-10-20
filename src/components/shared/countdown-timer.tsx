@@ -58,6 +58,25 @@ export function CountdownTimer({ expiresAt, className = "", showCurrentTime = tr
 
   const formatTime = (value: number) => value.toString().padStart(2, '0');
 
+  // Format date consistently for both server and client
+  const formatDate = (date: Date) => {
+    if (!isMounted) return 'Loading...';
+    
+    // Use UTC and fixed format to ensure consistency
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'UTC'
+    };
+    
+    return new Date(date).toLocaleString('en-GB', options);
+  };
+
   // Don't render time-dependent content until mounted to prevent hydration mismatch
   if (!isMounted) {
     return (
@@ -99,7 +118,7 @@ export function CountdownTimer({ expiresAt, className = "", showCurrentTime = tr
 
             {/* Session Info */}
             <div className="text-center text-sm text-muted-foreground">
-              <div>Session expires: {new Date(expiresAt).toLocaleString()}</div>
+              <div>Session expires: {formatDate(expiresAt)}</div>
             </div>
           </div>
         </CardContent>
@@ -115,9 +134,7 @@ export function CountdownTimer({ expiresAt, className = "", showCurrentTime = tr
           {showCurrentTime && currentTime && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>{currentTime.toLocaleDateString()}</span>
-              <span>•</span>
-              <span>{currentTime.toLocaleTimeString()}</span>
+              <span>{formatDate(currentTime)}</span>
             </div>
           )}
 
@@ -162,7 +179,7 @@ export function CountdownTimer({ expiresAt, className = "", showCurrentTime = tr
 
           {/* Session Info */}
           <div className="text-center text-sm text-muted-foreground">
-            <div>Session expires: {new Date(expiresAt).toLocaleString()}</div>
+            <div>Session expires: {formatDate(expiresAt)}</div>
           </div>
         </div>
       </CardContent>
