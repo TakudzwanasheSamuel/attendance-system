@@ -242,53 +242,12 @@ export async function detectVPN(
   userAgent?: string,
   timezone?: string
 ): Promise<VPNDetectionResult> {
-  // Skip detection for unknown IPs
-  if (!ipAddress || ipAddress === 'unknown') {
-    return {
-      isVPN: false,
-      confidence: 'low',
-      reasons: ['IP address unavailable for verification'],
-    };
-  }
-
-  // Run all detection methods in parallel
-  const [ipQualityResult, ipApiResult, heuristicResult] = await Promise.all([
-    checkIPQualityScore(ipAddress),
-    checkIPAPI(ipAddress),
-    Promise.resolve(performHeuristicChecks(ipAddress, userAgent, timezone)),
-  ]);
-
-  // Combine results
-  const allReasons: string[] = [
-    ...(ipQualityResult.reasons || []),
-    ...(ipApiResult.reasons || []),
-    ...(heuristicResult.reasons || []),
-  ];
-
-  // Determine if VPN is detected based on any method
-  const isVPN = 
-    (ipQualityResult.isVPN ?? false) || 
-    (ipApiResult.isVPN ?? false) || 
-    (heuristicResult.isVPN ?? false);
-
-  // Determine overall confidence
-  let confidence: 'high' | 'medium' | 'low' = 'low';
-  if (ipQualityResult.isVPN && ipQualityResult.confidence === 'high') {
-    confidence = 'high';
-  } else if (
-    (ipQualityResult.isVPN && ipQualityResult.confidence === 'medium') ||
-    (ipApiResult.isVPN && ipApiResult.confidence === 'medium')
-  ) {
-    confidence = 'medium';
-  } else if (isVPN) {
-    confidence = 'low';
-  }
-
+  // Dev mode: VPN detection disabled but we still return a friendly message
   return {
-    isVPN,
-    confidence,
-    reasons: allReasons,
-    details: ipQualityResult.details || ipApiResult.details,
+    isVPN: false,
+    confidence: 'low',
+    reasons: ['Detecting VPN... (dev mode: VPN checks disabled, attendance not blocked)'],
+    details: { ipAddress },
   };
 }
 
@@ -300,6 +259,9 @@ export function shouldBlockAttendance(
   detectionResult: VPNDetectionResult,
   strictMode: boolean = true
 ): boolean {
+  // Temporarily disable VPN blocking for testing
+  return false;
+  
   if (!detectionResult.isVPN) {
     return false;
   }

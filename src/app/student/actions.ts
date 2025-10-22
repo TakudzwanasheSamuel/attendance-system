@@ -120,10 +120,12 @@ export async function markAttendance(input: string | MarkAttendanceInput, locati
       };
     }
 
-    // Location verification
+    // Resolve current coordinates once for reuse below
+    const currentLat = typeof latitude === 'number' ? latitude : location?.latitude;
+    const currentLng = typeof longitude === 'number' ? longitude : location?.longitude;
+
+    // Location verification (only if session requires it and has a target location)
     if (session.requireLocation && (session.latitude || session.geofenceId)) {
-      const currentLat = latitude || location?.latitude;
-      const currentLng = longitude || location?.longitude;
       
       if (!currentLat || !currentLng) {
         return {
@@ -181,14 +183,14 @@ export async function markAttendance(input: string | MarkAttendanceInput, locati
       );
     }
 
-    // Use location-aware attendance marking if location is provided
-    if (location || (latitude && longitude)) {
+    // Use location-aware attendance marking if any coordinates are available
+    if (currentLat !== undefined && currentLng !== undefined) {
       const result = await markAttendanceWithLocation({
         sessionId: session.id,
         userId: user.id,
         status: 'Present',
-        latitude: currentLat,
-        longitude: currentLng,
+        latitude: currentLat ?? undefined,
+        longitude: currentLng ?? undefined,
         accuracy: location?.accuracy,
         geofenceId: session.geofenceId || undefined,
         isLocationValid: isVerified,
